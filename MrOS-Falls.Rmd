@@ -1,0 +1,60 @@
+---
+title: "Falls in MrOS"
+author:
+  
+  Marty Arrigotti^[OHSU-PSU School of Public Health]
+  
+  Tyler Bennett^[OHSU-PSU School of Public Health]
+  
+  Anna Booman^[OHSU-PSU School of Public Health]
+  
+  Colin Hawkinson^[OHSU-PSU School of Public Health]
+  
+  Matthew Hoctor^[OHSU-PSU School of Public Health]
+  
+date: "6/2/2021"
+output:
+  html_document:
+    number_sections: no
+    theme: lumen
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#library(dplyr)
+library(readxl)
+#library(tidyverse)
+#library(ggplot2)
+#library(CarletonStats)
+#library(pwr)
+#library(BSDA)
+#library(exact2x2)
+#library(car)
+#library(dvmisc)
+#library(emmeans)
+#library(gridExtra)
+#library(DescTools)
+#library(epitools)
+#library(pROC)
+#library(rje)
+#library(lmtest)
+#library(gtsummary)
+#library(mfp)
+#library(linearspline)
+#library(forestplot)
+```
+
+# Import MrOS data:
+
+```{r read MrOS data}
+mros <- read_xlsx("MrOS_Baseline_Falls_Project.xlsx")
+```
+
+# Model Building
+
