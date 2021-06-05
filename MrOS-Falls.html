@@ -967,7 +967,7 @@ map(.x = models, .f = function(x) {
 <blockquote>
 <p>For each of the above tables, the beta coefficient CI is labeled with the name of the variable being assessed in the table. The odds ratio is on the second row. The p-value for the Wald test is in the first entry of the last column <em>Note</em>: NA simply signifies the cell as empty.</p>
 </blockquote>
-<p>Since it’s multilevel and categorical, it’s computed seperately</p>
+<p>Since it’s multilevel and categorical, it’s computed separately</p>
 <pre class="r"><code>site_model &lt;- glm(falls ~ st_1 + st_2 + 
         st_3 + st_4 + st_5, data = MrOs, family = binomial())
 
@@ -1005,8 +1005,8 @@ as.data.frame(t(tbl))</code></pre>
 <p>Drawing up the odds ratios and confidence intervals hasn’t brought us to any separate conclusion than the univariate Wald tests did as to which variables are retained at the end of this step.</p>
 <p><strong>Note</strong>: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude <code>b1fnd</code>. Nothing else would change.</p>
 </div>
-<div id="step-2" class="section level2">
-<h2>Step 2</h2>
+<div id="step-2-first-multivariable-model" class="section level2">
+<h2>Step 2: First Multivariable Model</h2>
 <p>Throughout our handling of multivariate models, we’ll use the following structure to subset the data to only the variables we’re considering <em>before</em> censoring observations with incomplete fields.</p>
 <pre class="r"><code>step2_narm &lt;- MrOs %&gt;% 
   select(-id,-b1tblkg,-b1thd,-mhfallv2) %&gt;%
@@ -2150,8 +2150,8 @@ kable(summary(reduced_model)$coef)</code></pre>
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>This is effectively equivalent to the add-back approach, since we only saw <em>not</em> to exclude one variable (the PACE score) when doing single drops.</p>
 </div>
-<div id="step-3-screen-for-confounders-using-the-change-in-beta_i-method." class="section level2">
-<h2>Step 3: Screen for confounders using the change in <span class="math inline">\(\beta_i\)</span> method.</h2>
+<div id="step-3-check-removed-covariates-using-the-change-in-beta_i-method" class="section level2">
+<h2>Step 3: Check Removed Covariate(s) Using the Change in <span class="math inline">\(\beta_i\)</span> Method</h2>
 <p>We’ll solve for a percent change in beta coefficients not including the intercept common in the full and reduced using a simple formula:</p>
 <p><span class="math display">\[
 \Delta = \left(\frac{final-initial}{final}\right )\times 100\%
@@ -2162,6 +2162,18 @@ kable(summary(reduced_model)$coef)</code></pre>
 ## -6.9740132  0.8671725 -4.0312499</code></pre>
 <p>Clearly, some of the variables excluded in step 2 are confounders.</p>
 </div>
+<div id="step-4-checking-removed-covariates-regrouping-of-cagetorical-covariates" class="section level2">
+<h2>Step 4: Checking Removed Covariates &amp; Regrouping of Cagetorical Covariates</h2>
+</div>
+<div id="step-5-check-linearity-assumption-for-concinuous-variables" class="section level2">
+<h2>Step 5: Check Linearity Assumption for Concinuous Variables</h2>
+</div>
+<div id="step-6-exploring-interactions" class="section level2">
+<h2>Step 6: Exploring Interactions</h2>
+</div>
+</div>
+<div id="checking-the-fit-of-the-final-model" class="section level1">
+<h1>Checking the Fit of the Final Model</h1>
 </div>
 <div class="footnotes">
 <hr />

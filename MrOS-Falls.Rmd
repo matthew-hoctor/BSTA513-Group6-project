@@ -236,7 +236,7 @@ map(.x = models, .f = function(x) {
 
 > For each of the above tables, the beta coefficient CI is labeled with the name of the variable being assessed in the table. The odds ratio is on the second row. The p-value for the Wald test is in the first entry of the last column *Note*: NA simply signifies the cell as empty. 
 
-Since it's multilevel and categorical, it's computed seperately
+Since it's multilevel and categorical, it's computed separately
 
 ```{r}
 site_model <- glm(falls ~ st_1 + st_2 + 
@@ -268,7 +268,7 @@ Drawing up the odds ratios and confidence intervals hasn't brought us to any sep
 
 **Note**: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude `b1fnd`. Nothing else would change.
 
-## Step 2
+## Step 2: First Multivariable Model
 
 Throughout our handling of multivariate models, we'll use the following structure to subset the data to only the variables we're considering *before* censoring observations with incomplete fields. 
 
@@ -383,9 +383,7 @@ lrtest(full_model, reduced_model)
 
 This is effectively equivalent to the add-back approach, since we only saw *not* to exclude one variable (the PACE score) when doing single drops. 
 
-
-
-## Step 3: Screen for confounders using the change in $\beta_i$ method. 
+## Step 3: Check Removed Covariate(s) Using the Change in $\beta_i$ Method
 
 We'll solve for a percent change in beta coefficients not including the intercept common in the full and reduced using a simple formula: 
 
@@ -402,7 +400,13 @@ And we'll say that a $\Delta > 20\%$  is significant. If an individual coefficie
 
 Clearly, some of the variables excluded in step 2 are confounders. 
 
+## Step 4: Checking Removed Covariates & Regrouping of Cagetorical Covariates
 
+## Step 5: Check Linearity Assumption for Concinuous Variables
+
+## Step 6: Exploring Interactions
+
+# Checking the Fit of the Final Model
 
 
 
