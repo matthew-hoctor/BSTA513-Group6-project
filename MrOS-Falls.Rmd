@@ -36,6 +36,10 @@ library(readxl)
 library(knitr)
 library(lmtest)
 library(gtsummary)
+library(linearspline)
+library(LogisticDx)
+library(ResourceSelection)
+library(multcomp)
 ```
 
 ```{r, user defined functions, include=FALSE}
@@ -431,7 +435,16 @@ Clearly, some of the variables excluded in step 2 are confounders.
 
 ## Step 6: Exploring Interactions
 
-# Checking the Fit of the Final Model
+# Checking the Fit of the Preliminary Final Model
 
+## Assessing the fit of the preliminary final model
+
+## Assessing discriminative ability
+
+## Logistic Regression diagnostics
+
+### Graphical Assessment
+
+### Numerical Assessment
 
 
