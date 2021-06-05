@@ -27,34 +27,384 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#library(dplyr)
+```
+
+```{r, libraries}
+library(tidyverse)
+library(purrr)
 library(readxl)
-#library(tidyverse)
-#library(ggplot2)
-#library(CarletonStats)
-#library(pwr)
-#library(BSDA)
-#library(exact2x2)
-#library(car)
-#library(dvmisc)
-#library(emmeans)
-#library(gridExtra)
-#library(DescTools)
-#library(epitools)
-#library(pROC)
-#library(rje)
-#library(lmtest)
-#library(gtsummary)
-#library(mfp)
-#library(linearspline)
-#library(forestplot)
+library(knitr)
+library(lmtest)
+
 ```
 
-# Import MrOS data:
+```{r, user defined functions}
+regression_CI = function(pe, se, alpha) {
+  # returns log odds from regression coefficients;
+  # just quick_CI with the necessary reordering of bounds
+  ub = pe + qnorm(1-alpha/2)*se
+  lb = pe - qnorm(1-alpha/2)*se
+  if (ub < lb){
+    return(data.frame(
+      "point_estimate" = pe,
+      "lower_bound" = ub,
+      "upper_bound" = lb))
+  }
+  return(data.frame(
+    "point_estimate" = pe,
+    "lower_bound" = lb,
+    "upper_bound" = ub))
+}
 
-```{r read MrOS data}
-mros <- read_xlsx("MrOS_Baseline_Falls_Project.xlsx")
 ```
 
-# Model Building
+# Data Exploration
+
+```{r import data}
+MrOs <- readxl::read_excel("MrOS_Baseline_Falls_Project.xlsx")
+glimpse(MrOs)
+skimr::skim(MrOs)
+obj_classes <- c()
+for(i in seq(1:length(MrOs))) {
+  obj_classes = c(obj_classes, class(MrOs[[1,i]]))
+}
+obj_classes
+
+```
+
+We'll consider every variable in the data frame other than patient ID as a candidate variable for the model. We'll use Portland as the referent group for when site is considered as a categorical variable. The **outcome** of interest is having more than one fall in a given year. 
+
+
+```{r 1. variable }
+unique(MrOs$site)
+MrOs <- MrOs %>% 
+  mutate(st_1 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 1,
+    site == "MN" ~ 0,
+    site == "PA" ~ 0,
+    site == "PI" ~ 0,
+    site == "SD" ~ 0
+  )) %>% 
+  mutate(st_2 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 1,
+    site == "PA" ~ 0,
+    site == "PI" ~ 0,
+    site == "SD" ~ 0
+  )) %>%   
+  mutate(st_3 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 0,
+    site == "PA" ~ 1,
+    site == "PI" ~ 0,
+    site == "SD" ~ 0
+  )) %>% 
+  mutate(st_4 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 0,
+    site == "PA" ~ 0,
+    site == "PI" ~ 1,
+    site == "SD" ~ 0
+  ))%>% 
+  mutate(st_5 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 0,
+    site == "PA" ~ 0,
+    site == "PI" ~ 0,
+    site == "SD" ~ 1
+  )) %>% 
+  mutate(falls = case_when( # outcome coding
+    mhfalln2 > 1 ~ 1,
+    mhfalln2 <= 1 ~ 0
+  ))
+
+```
+
+> Groups sizes for each unique value of each categorical variable
+
+
+```{r check group sizes}
+MrOs_group_check = MrOs %>% 
+  select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, qlhealth,
+         mhfalln2, st_1,st_2,st_3,st_4,st_5)
+counts_list <- map(.x = as.list(MrOs_group_check), .f = function(x) {
+  vector = unique(x)
+  q = c()
+  for (i in vector) {
+    v = x[x == i]
+    obs = length(v)
+    q = c(q, obs)
+  }
+  return(q)
+})
+counts_list
+
+```
+
+Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it's due to the way R handles `NA` in boolean operations. The presence of this numer in the above output is a signifier of missingness. 
+
+This also serves as a sanity check for the above dummy variable generation. We see that the 
+
+There are only 52 subjects with a history of Parkinson's. That may be an issue later. 
+
+# Variable Seleciton 
+
+## Step 1: Univariate Analysis
+
+We employ a type 1 error rate of $\alpha = 0.20$ for univariate Wald Tests and construct 95% confidence intervals for each candidate variable's slope coefficient and one-unit odds ratio. 
+
+The null hypothesis for the Wald test, which is repeatedly used throughout this report, is that the beta coefficient in question $\hat \beta_i$ is equal to zero. The test statistic for the Wald test is $W = \frac{\hat \beta_1}{\widehat{SE} (\hat \beta_1)} \sim N(0,1)$. In output tables from `R`, the Wald statistic $W$ is represented by `z.value`. The criteria to reject is $P(|z| > W) < \alpha$, where alpha is the type one error rate specified for the particular test. Here, as has been already stated, we'll use a p-value of 0.20 as our cutoff for statistical significance, but other values for $\alpha$ will be specified throughout. 
+
+
+```{r}
+models = list(
+  glm(falls ~ st_1 + st_2 + 
+        st_3 + st_4 + st_5, data = MrOs, family = binomial()),
+  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
+  glm(falls ~ giage1, data = MrOs, family = binomial()),
+  glm(falls ~ mhdiab, data = MrOs, family = binomial()),
+  glm(falls ~ mhstrk, data = MrOs, family = binomial()),
+  glm(falls ~ mhcopd, data = MrOs, family = binomial()),
+  glm(falls ~ mhpark, data = MrOs, family = binomial()),
+  glm(falls ~ mharth, data = MrOs, family = binomial()),
+  glm(falls ~ mhcancer, data = MrOs, family = binomial()),
+  glm(falls ~ pascore, data = MrOs, family = binomial()),
+  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
+  glm(falls ~ hwbmi, data = MrOs, family = binomial()),
+  glm(falls ~ b1tbfkg, data = MrOs, family = binomial()),
+  glm(falls ~ b1tblkg, data = MrOs, family = binomial()),
+  glm(falls ~ gsgrpavg, data = MrOs, family = binomial()),
+  glm(falls ~ nfwlkspd, data = MrOs, family = binomial()),
+  glm(falls ~ b1fnd, data = MrOs, family = binomial()),
+  glm(falls ~ b1thd, data = MrOs, family = binomial()))
+
+# kable looks better in pdf
+# map(.x = 
+#       map(.x = 
+#             models,
+#           .f =
+#             function(x)
+#               {data.frame(summary(x)$coefficients)}),
+#     .f =
+#       function(x) {kable(x)})
+
+map(.x = 
+            models,
+          .f =
+            function(x)
+              {data.frame(summary(x)$coefficients)})
+
+```
+
+Slope coefficients pass our univariate Wald test ($p < 0.2 = \alpha$) for study site, age at enrollment, history of diabetes, history of stroke, history of COPD, history of Parkinson's, history of arthritis, history of cancer, PASE score, patient rating of overall health, body mass index (BMI), total body fat mass, average grip strength, walk speed, corrected femoral neck bone minderal density (BMD). The only variables excluded here are total body lean mass and corrected total hip BMD. 
+
+```{r beta CI, OR CI, and Wald p-value for each model}
+models = list(
+  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
+  glm(falls ~ giage1, data = MrOs, family = binomial()),
+  glm(falls ~ mhdiab, data = MrOs, family = binomial()),
+  glm(falls ~ mhstrk, data = MrOs, family = binomial()),
+  glm(falls ~ mhcopd, data = MrOs, family = binomial()),
+  glm(falls ~ mhpark, data = MrOs, family = binomial()),
+  glm(falls ~ mharth, data = MrOs, family = binomial()),
+  glm(falls ~ mhcancer, data = MrOs, family = binomial()),
+  glm(falls ~ pascore, data = MrOs, family = binomial()),
+  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
+  glm(falls ~ hwbmi, data = MrOs, family = binomial()),
+  glm(falls ~ b1tbfkg, data = MrOs, family = binomial()),
+  glm(falls ~ gsgrpavg, data = MrOs, family = binomial()),
+  glm(falls ~ nfwlkspd, data = MrOs, family = binomial()),
+  glm(falls ~ b1fnd, data = MrOs, family = binomial()))
+
+map(.x = models, .f = function(x) {
+  coeffs = summary(x)$coefficients # table coefficients...
+  p  = coeffs[2,4] # beta_1 p-val...
+  b  = coeffs[,1][2] # beta_1...
+  se = coeffs[2,2] # beta_1 se...
+  beta_CI = regression_CI(pe = b, se = se, alpha = 0.05)
+  OR_CI   = exp(beta_CI)
+  table   = rbind(beta_CI, OR_CI)
+  table$p = c(p, NA)
+  rownames(table) = c(rownames(table)[1], "OR")
+  return((table)) # put kable() back
+})
+
+```
+
+> For each of the above tables, the beta coefficient CI is labeled with the name of the variable being assessed in the table. The odds ratio is on the second row. The p-value for the Wald test is in the first entry of the last column *Note*: NA simply signifies the cell as empty. 
+
+Since it's multilevel and categorical, it's computed seperately
+
+```{r}
+site_model <- glm(falls ~ st_1 + st_2 + 
+        st_3 + st_4 + st_5, data = MrOs, family = binomial())
+
+# slope coefficients 
+betas <- site_model$coef[2:6]
+# standard errors 
+ses <- as.data.frame(summary(site_model)$coef)$`Std. Error`[2:6]
+# confidence interval beta & CI 
+beta_upper_bounds <- betas + qnorm(1-0.05/2)*ses
+beta_lower_bounds <- betas - qnorm(1-0.05/2)*ses
+OR_upper_bounds <- exp(betas + qnorm(1-0.05/2)*ses)
+OR_lower_bounds <- exp(betas - qnorm(1-0.05/2)*ses)
+OR <- exp(betas)
+# formatting 
+tbl <- rbind(betas, 
+      beta_upper_bounds,
+      beta_lower_bounds, 
+      OR,
+      OR_upper_bounds, 
+      OR_lower_bounds)
+# output 
+as.data.frame(t(tbl))
+
+```
+
+Drawing up the odds ratios and confidence intervals hasn't brought us to any separate conclusion than the univariate Wald tests did as to which variables are retained at the end of this step. 
+
+**Note**: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude `b1fnd`. Nothing else would change.
+
+## Step 2
+
+Throughout our handling of multivariate models, we'll use the following structure to subset the data to only the variables we're considering *before* censoring observations with incomplete fields. 
+
+```{r}
+step2_narm <- MrOs %>% 
+  select(-id,-b1tblkg,-b1thd,-mhfallv2) %>%
+  drop_na()
+
+```
+
+We'll add all the variables identified as important in step one to form our *full model*. Then we'll form a *reduced model* with every variable associated with a Wald test p-value less than 0.05 and compare the full and reduced model with the likelihood ratio test. The null hypothesis for the likelihood ratio test is $H_0: \beta_{inf} = 0$, $H_1: \beta_{inf} \neq 0$, where the criteria to reject is a p-value less than 0.05.
+
+```{r}
+full_model <- 
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      data = step2_narm)
+
+kable(summary(full_model)$coef)
+summary(full_model)$coef[,4] < 0.05 
+
+# exclude site, hx. diabetes, hx stroke, hx cancer, PACE score. 
+reduced_model <-  
+  glm(falls ~  giage1 + mhpark +
+        mhcopd + mharth + qlhealth + 
+        hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # can't throw them all away 
+
+
+```
+
+The reduced model does *not* provide a better fit than the full model. Next, we'll use the same full model, but reduce the model by only one variable before taking the likelihood ratio. 
+
+```{r}
+# exclude site, 
+reduced_model <-  
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,  
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # yes exclude site 
+
+```
+
+```{r}
+# exclude hx. diabetes,
+reduced_model <-  
+  glm(falls ~  giage1 + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # yes exclude hx. diabetes 
+
+```
+
+```{r}
+# exclude hx stroke
+reduced_model <-  
+  glm(falls ~  giage1 + mhdiab + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # do exclude hx stroke 
+
+```
+
+
+```{r}
+# exclude hx cancer
+reduced_model <-  
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # exclude hx cancer 
+
+```
+
+```{r}
+# exclude PACE score. 
+reduced_model <-  
+  glm(falls ~  giage1 + mhpark +
+        mhcopd + mharth + qlhealth + 
+        hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # don't exclude PACE score 
+
+
+```
+
+```{r}
+# exclude site, hx. diabetes, hx stroke, hx cancer, PACE score. 
+reduced_model <-  
+   glm(falls ~  giage1  + mhpark + mhcopd + mharth  + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,  
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) 
+
+```
+
+This is effectively equivalent to the add-back approach, since we only saw *not* to exclude one variable (the PACE score) when doing single drops. 
+
+
+
+## Step 3: Screen for confounders using the change in $\beta_i$ method. 
+
+We'll solve for a percent change in beta coefficients not including the intercept common in the full and reduced using a simple formula: 
+
+$$
+\Delta = \left(\frac{final-initial}{final}\right )\times 100\%
+$$
+
+And we'll say that a $\Delta > 20\%$  is significant. If an individual coefficient is altered by more than 20%, at least one of the excluded coefficients may be an important confounder of the association between the outcome and a variable whose slope coefficient was altered. 
+
+```{r}
+(reduced_model$coefficients[2:4]-full_model$coefficients[3:5])/reduced_model$coefficients[2:4]
+
+```
+
+Clearly, some of the variables excluded in step 2 are confounders. 
+
+
+
+
 

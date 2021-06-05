@@ -1,12 +1,120 @@
 ---
-title: "Methods_1"
-author: "Colin Hawkinson"
+title: "Falls in MrOS"
+author:
+  
+  Marty Arrigotti^[OHSU-PSU School of Public Health]
+  
+  Tyler Bennett^[OHSU-PSU School of Public Health]
+  
+  Anna Booman^[OHSU-PSU School of Public Health]
+  
+  Colin Hawkinson^[OHSU-PSU School of Public Health]
+  
+  Matthew Hoctor^[OHSU-PSU School of Public Health]
+  
 date: "6/2/2021"
-output: html_document
+output:
+  html_document:
+    number_sections: no
+    theme: lumen
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+  pdf_document:
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Dunk on people? 
+```{r, libraries}
+library(tidyverse)
+library(purrr)
+library(readxl)
+
+```
+
+```{r user functions}
+MrOs <- readxl::read_excel("MrOS_Baseline_Falls_Project.xlsx")
+glimpse(MrOs)
+skimr::skim(MrOs)
+obj_classes <- c()
+for(i in seq(1:length(MrOs))) {
+  obj_classes = c(obj_classes, class(MrOs[[1,i]]))
+}
+obj_classes
+
+```
+
+We'll consider every variable in the data frame other than patient ID as a candidate variable for the model. We'll use Portland as the referent group for when site is considered as a categorical variable. 
+
+```{r 1. variable }
+unique(MrOs$site)
+MrOs <- MrOs %>% 
+  mutate(st_1 = case_when(
+    site = "PO" ~ 0
+    site = "BI" ~ 1
+    site = "MN" ~ 0 
+    site = "PA" ~ 0
+    site = "PI" ~ 0
+    site = "SD" ~ 0
+  )) %>% 
+  mutate(st_2 = case_when(
+    site = "PO" ~ 0
+    site = "BI" ~ 0
+    site = "MN" ~ 0
+    site = "PA" ~ 1
+    site = "PI" ~ 0
+    site = "SD" ~ 0
+  )) %>%   
+  mutate(st_3 = case_when(
+    site = "PO" ~ 0
+    site = "BI" ~ 0
+    site = "MN" ~ 0
+    site = "PA" ~ 0
+    site = "PI" ~ 1
+    site = "SD" ~ 0
+  )) %>% 
+  mutate(st_4 = case_when(
+    site = "PO" ~ 0
+    site = "BI" ~ 0
+    site = "MN" ~ 0
+    site = "PA" ~ 0
+    site = "PI" ~ 0
+    site = "SD" ~ 1
+  ))
+
+```
+
+Check the number of unique observations within each level for each candidate variable... 
+
+```{r 2.}
+# unique(MrOs[2])
+class(as.character(MrOs[2]))
+class(MrOs$site)
+
+# head(MrOs)
+# unique(MrOs$mhstrk)
+# length(MrOs$mhstrk[MrOs$mhstrk == 0])
+# length(MrOs$mhstrk[MrOs$mhstrk == 1])
+
+ls_1 <- c()
+for (i in (MrOs)) {
+  d = c()
+  for (unique in unique(i)) {
+    d = c(d, length(i[i == un]))
+    ls_1 = c(ls_1, d)
+  }
+  
+}
+ls_1
+
+```
+
+
+
+
+
+
