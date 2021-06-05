@@ -37,7 +37,7 @@ library(knitr)
 library(lmtest)
 library(dplyr)
 library(gtsummary)
-# library(linearspline)
+library(mfp)
 library(LogisticDx)
 library(ResourceSelection)
 library(multcomp)
@@ -139,8 +139,7 @@ MrOs <- MrOs %>%
 
 ```{r check group sizes}
 MrOs_group_check = MrOs %>%  # why did this break?
-  dplyr::select(
-    site, mhdiab, mhstrk, mhpark, mhcopd,
+    dplyr::select(site, mhdiab, mhstrk, mhpark, mhcopd,
     mharth, mhcancer, qlhealth, mhfalln2,
     st_1,st_2,st_3,st_4,st_5)
 
@@ -552,14 +551,15 @@ glimpse(step3_narm1)
 
 We'll employ the loess approach to screen for linearity in the log odds across the range of each continuous independent variable. For variables that are obviously nonlinear by loess, we'll use the fractional polynomial approach to identify the best transformation. 
 
-```{r}
+```{r, loess checks}
 # loess subject age 
-step3_narm1 = step3_narm1 %>% 
+step3_narm1 = step3_narm1 %>% # # 
   arrange(desc(giage1)) %>% 
   map_df(rev)
 gg1 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = giage1, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = giage1, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 # loess PACE score 
@@ -569,6 +569,7 @@ step3_narm1 = step3_narm1 %>%
 gg2 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = pascore, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = pascore, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 # loess BMI 
@@ -578,6 +579,7 @@ step3_narm1 = step3_narm1 %>%
 gg3 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = hwbmi, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = hwbmi, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 # loess grip strength 
@@ -587,6 +589,7 @@ step3_narm1 = step3_narm1 %>%
 gg4 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = gsgrpavg, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = gsgrpavg, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 # loess walk speed 
@@ -596,6 +599,7 @@ step3_narm1 = step3_narm1 %>%
 gg5 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = nfwlkspd, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = nfwlkspd, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 # loess corrected neck BMD 
@@ -605,6 +609,7 @@ step3_narm1 = step3_narm1 %>%
 gg6 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = b1fnd, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = b1fnd, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 # loess body fat mass 
@@ -614,6 +619,7 @@ step3_narm1 = step3_narm1 %>%
 gg7 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = b1tbfkg, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = b1tbfkg, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 # loess body lean mass 
@@ -623,6 +629,7 @@ step3_narm1 = step3_narm1 %>%
 gg8 <- 
   ggplot(data = step3_narm1) +
   stat_smooth(mapping = aes(x = b1tblkg, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = b1tblkg, y = falls), method = "lm", color = "red") + 
   theme_minimal()
 
 grid.arrange(gg1, 
@@ -636,9 +643,618 @@ grid.arrange(gg1,
 
 ```
 
+We'll check the fractional polynomials for walk speed, corrected femoral neck bone mineral density, average left/right grip strength, BMI, and subject age. 
 
+```{r, fractional polynomial screening}
+step4_model$call
+
+fracpoly_age <- mfp(
+  falls ~ fp(giage1, df = 4) +
+    mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # use ident for age
+)
+
+# frac_PACEscore <- mfp(
+#   falls ~ fp(pascore, df = 4) +
+#     giage1 + mhstrk + mhpark + mhcopd + mharth +
+#     qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd +
+#     b1tbfkg + b1tblkg, data = step3_narm1,
+#   family = binomial(),
+#   alpha = 0.1,
+#   verbose = T # use ident for PACE score
+# )
+
+frac_BMI <- mfp(
+  falls ~ fp(hwbmi, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlhealth + gsgrpavg + nfwlkspd + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # use ident for hwbmi
+)
+
+frac_grip <- mfp(
+  falls ~ fp(gsgrpavg, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlhealth + hwbmi + nfwlkspd + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # I((gsgrpavg/100)^-2)+I((gsgrpavg/100)^-2*log((gsgrpavg/100)))
+)
+
+frac_walkspeed <- mfp(
+  falls ~ fp(nfwlkspd, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlhealth + hwbmi + gsgrpavg + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # inverse square for nfwlkspd
+)
+
+frac_neckBMD <- mfp(
+  falls ~ fp(b1fnd, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlhealth + hwbmi + gsgrpavg + nfwlkspd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # idnet for b1fnd
+)
+
+frac_fatMass <- mfp(
+  falls ~ fp(b1tbfkg, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlhealth + hwbmi + gsgrpavg + nfwlkspd +
+    b1fnd + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # idnet for b1tbfkg
+)
+
+frac_fatMass <- mfp(
+  falls ~ fp(b1tblkg, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlhealth + hwbmi + gsgrpavg + nfwlkspd +
+    b1fnd + b1tbfkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # idnet for b1tblkg
+)
+
+```
+
+
+```{r, encode transformation}
+step4_narm <- step3_narm1 %>% 
+  mutate(inv_sq_walk = nfwlkspd^-2) %>% 
+  mutate(
+    grip_trform = 
+      (gsgrpavg/100)^-2 + ((gsgrpavg/100)^-2 * log(gsgrpavg/100)))
+
+```
+
+```{r, loess for transforms}
+step4_narm = step4_narm %>%
+  arrange(desc(inv_sq_walk)) %>%
+  map_df(rev)
+gg9 <-
+  ggplot(data = step4_narm) +
+  stat_smooth(mapping = aes(x = inv_sq_walk, y = falls), method = "loess") +
+  stat_smooth(mapping = aes(x = inv_sq_walk, y = falls), method = "lm", color = "red") +
+  theme_minimal()
+
+
+step4_narm = step4_narm %>%
+  arrange(desc(grip_trform)) %>%
+  map_df(rev)
+gg10 <-
+  ggplot(data = step4_narm) +
+  stat_smooth(mapping = aes(x = grip_trform, y = falls), method = "loess") +
+  stat_smooth(mapping = aes(x = grip_trform, y = falls), method = "lm", color = "red") +
+  theme_minimal()
+
+grid.arrange(gg9, gg5, gg10, gg4)
+
+```
+
+```{r}
+step4_model$call
+summary(step4_model)$coef # without transformations
+
+step5_model1 <- glm(
+  formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg, data = step4_narm)
+
+step5_model2 <- glm(
+  formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlhealth + hwbmi + grip_trform + inv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg, data = step4_narm)
+
+summary(step5_model1)$coef
+summary(step5_model2)$coef
+
+summary(step4_model)$deviance
+summary(step5_model1)$deviance
+summary(step5_model2)$deviance
+
+
+```
+
+The transforms identified by the fractional polynomial track seem to produce less linear log odds with respect to the outcome. We'll proceed with two preliminary final models: one containing the transforms of average grip strength and walk speed, and one containing the original encoding. Even though the inverse square of walk speed has a more statistically significant Wald statistic, we can see from the above plot that the linear fit for the log odds is estimated above one for a significant portion of the range. At any rate, there isn't a significant change in deviance between the model generated in step 4 and the models containing the transformations. 
+
+
+```{r}
+step5_model <- step4_model
+summary(step5_model)$coef
+
+```
 
 ## Step 6: Exploring Interactions
+
+Since there are thirteen variables in the model, there are ${13} \choose 2 $ $= 78$ total interaction models to screen.  
+
+```{r, interaction screening aka wall of shame}
+EMM1 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhstrk, data = step3_narm1)
+EMM2 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhpark, data = step3_narm1)
+EMM3 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhcopd, data = step3_narm1)
+EMM4 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mharth, data = step3_narm1)
+EMM5 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*pascore, data = step3_narm1)
+EMM6 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*qlhealth, data = step3_narm1)
+EMM7 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*hwbmi, data = step3_narm1)
+EMM8 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*gsgrpavg, data = step3_narm1)
+EMM9 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*nfwlkspd, data = step3_narm1)
+EMM10 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1fnd, data = step3_narm1)
+EMM11 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1tbfkg, data = step3_narm1)
+EMM12 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1tblkg, data = step3_narm1)
+EMM13 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mhpark, data = step3_narm1)
+EMM14 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mhcopd, data = step3_narm1)
+EMM15 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mharth, data = step3_narm1)
+EMM16 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*pascore, data = step3_narm1)
+EMM17 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*qlhealth, data = step3_narm1)
+EMM18 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*hwbmi, data = step3_narm1)
+EMM19 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*gsgrpavg, data = step3_narm1)
+EMM20 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*nfwlkspd, data = step3_narm1)
+EMM21 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1fnd, data = step3_narm1)
+EMM22 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1tbfkg, data = step3_narm1)
+EMM23 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1tblkg, data = step3_narm1)
+EMM24 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*mhcopd, data = step3_narm1)
+EMM25 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*mharth, data = step3_narm1)
+EMM26 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*pascore, data = step3_narm1)
+EMM27 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*qlhealth, data = step3_narm1)
+EMM28 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*hwbmi, data = step3_narm1)
+EMM29 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*gsgrpavg, data = step3_narm1)
+EMM30 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*nfwlkspd, data = step3_narm1)
+EMM31 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1fnd, data = step3_narm1)
+EMM32 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1tbfkg, data = step3_narm1)
+EMM33 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1tblkg, data = step3_narm1)
+EMM34 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*mharth, data = step3_narm1)
+EMM35 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*pascore, data = step3_narm1)
+EMM36 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*qlhealth, data = step3_narm1)
+EMM37 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*hwbmi, data = step3_narm1)
+EMM38 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*gsgrpavg, data = step3_narm1)
+EMM39 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*nfwlkspd, data = step3_narm1)
+EMM40 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1fnd, data = step3_narm1)
+EMM41 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1tbfkg, data = step3_narm1)
+EMM42 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1tblkg, data = step3_narm1)
+EMM43 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*pascore, data = step3_narm1)
+EMM44 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*qlhealth, data = step3_narm1)
+EMM45 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*hwbmi, data = step3_narm1)
+EMM46 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*gsgrpavg, data = step3_narm1)
+EMM47 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*nfwlkspd, data = step3_narm1)
+EMM48 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1fnd, data = step3_narm1)
+EMM49 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1tbfkg, data = step3_narm1)
+EMM50 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1tblkg, data = step3_narm1)
+EMM51 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*qlhealth, data = step3_narm1)
+EMM52 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*hwbmi, data = step3_narm1)
+EMM53 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*gsgrpavg, data = step3_narm1)
+EMM54 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*nfwlkspd, data = step3_narm1)
+EMM55 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1fnd, data = step3_narm1)
+EMM56 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1tbfkg, data = step3_narm1)
+EMM57 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1tblkg, data = step3_narm1)
+EMM58 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*hwbmi, data = step3_narm1)
+EMM59 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*gsgrpavg, data = step3_narm1)
+EMM60 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*nfwlkspd, data = step3_narm1)
+EMM61 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*b1fnd, data = step3_narm1)
+EMM62 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*b1tbfkg, data = step3_narm1)
+EMM63 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*b1tblkg, data = step3_narm1)
+EMM64 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*gsgrpavg, data = step3_narm1)
+EMM65 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*nfwlkspd, data = step3_narm1)
+EMM66 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1fnd, data = step3_narm1)
+EMM67 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1tbfkg, data = step3_narm1)
+EMM68 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1tblkg, data = step3_narm1)
+EMM69 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*nfwlkspd, data = step3_narm1)
+EMM70 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1fnd, data = step3_narm1)
+EMM71 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1tbfkg, data = step3_narm1)
+EMM72 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1tblkg, data = step3_narm1)
+EMM73 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + nfwlkspd*b1fnd, data = step3_narm1)
+EMM75 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + nfwlkspd*b1tbfkg, data = step3_narm1)
+EMM76 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + nfwlkspd*b1tblkg, data = step3_narm1)
+EMM77 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + b1fnd*b1tbfkg, data = step3_narm1)
+EMM74 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + b1fnd*b1tblkg, data = step3_narm1)
+EMM78 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg + b1tbfkg*b1tblkg, data = step3_narm1)
+
+EMM_list <- list(
+  EMM1,
+  EMM2,
+  EMM3,
+  EMM4,
+  EMM5,
+  EMM6,
+  EMM7,
+  EMM8,
+  EMM9,
+  EMM10,
+  EMM11,
+  EMM12,
+  EMM13,
+  EMM14,
+  EMM15,
+  EMM16,
+  EMM17,
+  EMM18,
+  EMM19,
+  EMM20,
+  EMM21,
+  EMM22,
+  EMM23,
+  EMM24,
+  EMM25,
+  EMM26,
+  EMM27,
+  EMM28,
+  EMM29,
+  EMM30,
+  EMM31,
+  EMM32,
+  EMM33,
+  EMM34,
+  EMM35,
+  EMM36,
+  EMM37,
+  EMM38,
+  EMM39,
+  EMM40,
+  EMM41,
+  EMM42,
+  EMM43,
+  EMM44,
+  EMM45,
+  EMM46,
+  EMM47,
+  EMM48,
+  EMM49,
+  EMM50,
+  EMM51,
+  EMM52,
+  EMM53,
+  EMM54,
+  EMM55,
+  EMM56,
+  EMM57,
+  EMM58,
+  EMM59,
+  EMM60,
+  EMM61,
+  EMM62,
+  EMM63,
+  EMM64,
+  EMM65,
+  EMM66,
+  EMM67,
+  EMM68,
+  EMM69,
+  EMM70,
+  EMM71,
+  EMM72,
+  EMM73,
+  EMM74,
+  EMM75,
+  EMM76,
+  EMM77,
+  EMM78) # 400 lines of nonsense 
+
+```
+
+```{r}
+which(unlist(map(.x = EMM_list, 
+    .f = function(x){
+      summary(x)$coef[15,1] > 0.1
+    })))
+
+v_pval <- unlist(map(.x = EMM_list, 
+    .f = function(x){
+      summary(x)$coef[15,1]
+    }))
+
+v_test <- unlist(map(.x = EMM_list, 
+    .f = function(x){
+      summary(x)$coef[15,1] > 0.1
+    }))
+
+v_terms <- unlist(map(.x = EMM_list,
+    .f = function(x){
+      rownames(summary(x)$coef)[15]
+    }))
+
+df_EMM <- data.frame(
+  v_pval,
+  v_test
+)
+rownames(df_EMM) <- v_terms
+df_EMM
+
+length(rownames(df_EMM))
+length(unique(rownames(df_EMM)))
+
+```
+
+The three statistically significant interaction terms: `mhpark:mhcopd`, `mhpark:mharth`, and `mharth:b1fnd`.
+
+```{r, rule out interaction terms with mhpark}
+length(step4_narm[step4_narm$mhcopd == 1 & step4_narm$mhpark == 1,]$id)
+step4_narm[step4_narm$mhcopd == 1 & step4_narm$mhpark == 1,]
+
+length(step4_narm[step4_narm$mharth == 1 & step4_narm$mhpark == 1,]$id)
+step4_narm[step4_narm$mharth == 1 & step4_narm$mhpark == 1,]
+
+```
+
+There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's and a history of COPD and arthritis, respectively. Clearly, that is too few subjects for this interaction term to make sense. <review?>
+
+```{r}
+preliminary_final_model <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+      pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+      b1tbfkg + b1tblkg + mharth:b1fnd, data = step3_narm1)
+as.data.frame(summary(preliminary_final_model)$coef)
+
+# pass Wald test for alpha = 0.05  
+(summary(preliminary_final_model)$coef[,4]) < 0.05
+# pass Wald test for alpha = 0.10   
+(summary(preliminary_final_model)$coef[,4]) < 0.1
+```
 
 # Checking the Fit of the Preliminary Final Model
 
