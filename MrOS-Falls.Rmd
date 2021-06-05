@@ -35,8 +35,9 @@ library(purrr)
 library(readxl)
 library(knitr)
 library(lmtest)
+library(dplyr)
 library(gtsummary)
-library(linearspline)
+# library(linearspline)
 library(LogisticDx)
 library(ResourceSelection)
 library(multcomp)
@@ -135,9 +136,27 @@ MrOs <- MrOs %>%
 ## Check Groups sizes for each unique value of each categorical variable
 
 ```{r check group sizes}
-MrOs_group_check = MrOs %>% 
-  select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, qlhealth,
-         mhfalln2, st_1,st_2,st_3,st_4,st_5)
+MrOs_group_check <- data.frame(
+  MrOs$site, 
+  MrOs$mhdiab,
+  MrOs$mhstrk,
+  MrOs$mhpark, 
+  MrOs$mhcopd,
+  MrOs$mharth,
+  MrOs$mhcancer,
+  MrOs$qlhealth,
+  MrOs$mhfalln2,
+  MrOs$st_1,
+  MrOs$st_2,
+  MrOs$st_3,
+  MrOs$st_4,
+  MrOs$st_5
+)
+
+# MrOs_group_check = MrOs %>%  # why did this break? 
+#   select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, qlhealth,
+#          mhfalln2, st_1,st_2,st_3,st_4,st_5)
+
 counts_list <- map(.x = as.list(MrOs_group_check), .f = function(x) {
   vector = unique(x)
   q = c()
@@ -152,9 +171,14 @@ counts_list
 
 ```
 
+```{r}
+
+
+```
+
 Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it's due to the way R handles `NA` in boolean operations. The presence of this number in the above output is a signifier of missingness. 
 
-This also serves as a sanity check for the above dummy variable generation. We see that the 
+This also serves as a sanity check for the above dummy variable generation. We see that the correct number of observations exist in each dummy variable by comparing the lower count in the dummy variables to the counts in `site`. 
 
 There are only 52 subjects with a history of Parkinson's. That may be an issue later. 
 
@@ -244,7 +268,7 @@ map(.x = models, .f = function(x) {
 
 > For each of the above tables, the beta coefficient CI is labeled with the name of the variable being assessed in the table. The odds ratio is on the second row. The p-value for the Wald test is in the first entry of the last column *Note*: NA simply signifies the cell as empty. 
 
-Since it's multilevel and categorical, it's computed separately
+Since site is multilevel and categorical, it's computed separately. 
 
 ```{r}
 site_model <- glm(falls ~ st_1 + st_2 + 
@@ -342,7 +366,7 @@ reduced_model <-
 
 kable(summary(reduced_model)$coef)
 
-lrtest(full_model, reduced_model) # yes exclude site 
+lrtest(full_model, reduced_model) # exclude site 
 
 ```
 
@@ -354,7 +378,7 @@ reduced_model <-
 
 kable(summary(reduced_model)$coef)
 
-lrtest(full_model, reduced_model) # yes exclude hx. diabetes 
+lrtest(full_model, reduced_model) # exclude hx. diabetes 
 
 ```
 
@@ -366,7 +390,7 @@ reduced_model <-
 
 kable(summary(reduced_model)$coef)
 
-lrtest(full_model, reduced_model) # do exclude hx stroke 
+lrtest(full_model, reduced_model) # exclude hx stroke 
 
 ```
 
@@ -400,9 +424,13 @@ lrtest(full_model, reduced_model) # don't exclude PACE score
 
 ```{r}
 # exclude site, hx. diabetes, hx stroke, hx cancer, PACE score. 
+full_model$call
+
+# step2_narm$
 reduced_model <-  
-   glm(falls ~  giage1  + mhpark + mhcopd + mharth  + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,  
-      data = step2_narm)
+   glm(formula = falls ~ giage1 + mhpark + mhcopd + 
+    mharth + pascore + qlhealth + hwbmi + gsgrpavg + 
+    nfwlkspd + b1fnd + b1tbfkg + mhstrk, data = step2_narm)
 
 kable(summary(reduced_model)$coef)
 
@@ -410,7 +438,7 @@ lrtest(full_model, reduced_model)
 
 ```
 
-This is effectively equivalent to the add-back approach, since we only saw *not* to exclude one variable (the PACE score) when doing single drops. 
+We've added back PACE score and history of stroke to achieve the most parsimonious model for which the full model does not provide significant advantage in performance by the likelihood ratio test.
 
 ## Step 3: Check Removed Covariate(s) Using the Change in $\beta_i$ Method
 
@@ -423,13 +451,100 @@ $$
 And we'll say that a $\Delta > 20\%$  is significant. If an individual coefficient is altered by more than 20%, at least one of the excluded coefficients may be an important confounder of the association between the outcome and a variable whose slope coefficient was altered. 
 
 ```{r}
-(reduced_model$coefficients[2:4]-full_model$coefficients[3:5])/reduced_model$coefficients[2:4]
+# reorder $call... 
+full_model <- 
+  glm(
+    formula = falls ~ giage1  + mhpark + mhcopd + 
+    mharth + qlhealth + hwbmi + gsgrpavg + 
+    nfwlkspd + b1fnd + b1tbfkg + mhstrk + pascore + mhdiab + mhcancer + 
+    st_1 + st_2 + st_3 + st_4 + st_5, data = step2_narm)
+
+reduced_model <- 
+  glm(
+    formula = falls ~ giage1  + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + mhstrk + pascore, data = step2_narm)
+
+# # make sure the $call is ordered correctly 
+# rownames(as.data.frame(reduced_model$coef[2:13]))==rownames(as.data.frame(full_model$coef[2:13]))
+
+# the change in beta 
+(reduced_model$coef[2:13]-full_model$coef[2:13])/reduced_model$coefficients[2:13]
+
+# bool if change in beta exceeds 20%
+abs((reduced_model$coef[2:13]-full_model$coef[2:13])/reduced_model$coefficients[2:13]) > 0.2
 
 ```
 
-Clearly, some of the variables excluded in step 2 are confounders. 
+It appears that none of the variables excluded in step two are confounders in this model. We'll retain the reduced model from step two at this stage. 
+
+```{r}
+step3_model <- reduced_model
+summary(step3_model)$coef[,4] < 0.05
+# kable(summary(step3_model)$coef)
+
+```
 
 ## Step 4: Checking Removed Covariates & Regrouping of Cagetorical Covariates
+
+We'll add back the subjects' race and cancer status to determine if their joint significance by the Wald test is sufficient to include them in the model. We'll again use $\alpha = 0.05$ for the type one error rate of our Wald Test. We'll add the variables individually, then together. 
+
+```{r}
+step3_narm1 <- MrOs %>% 
+  select(-id,-b1thd,-mhfallv2) %>%
+  drop_na()
+
+# add back b1tblkg 
+check_again_lean <- glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg, data = step3_narm1)
+
+summary(check_again_lean)$coef
+summary(check_again_lean)$coef[14,4] < 0.05 # lean body mass now significant 
+
+
+
+```
+
+```{r}
+step3_narm2 <- MrOs %>% 
+  select(-id,-b1tblkg,-mhfallv2) %>%
+  drop_na()
+
+# add back b1tblkg 
+check_again_hipBMD <- glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1thd, data = step3_narm2)
+
+summary(check_again_hipBMD)$coef
+summary(check_again_hipBMD)$coef[14,4] < 0.05 # corrected hip bone mineral density not significant 
+
+```
+
+```{r}
+step3_narm3 <- MrOs %>% 
+  select(-id,-mhfallv2) %>%
+  drop_na()
+
+# add back b1tblkg 
+check_again_both <- glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1thd + b1tblkg, data = step3_narm3)
+
+summary(check_again_both)$coef
+summary(check_again_both)$coef[14,4] < 0.05 # corrected hip bone mineral density not significant even when lean body mass considered 
+
+```
+
+We'll add lean body mass to the model from the last step to end step four. Addition of these variables dot *not* make the variables added back at the previous stage pass a univaraite Wald test where $\alpha = 0.05$, but that's inconsequential. 
+
+```{r}
+step4_model <- check_again_lean
+df_1 <- as.data.frame(summary(step4_model)$coef)
+df_1$pass <- df_1[,4] < 0.05
+df_1
+
+```
 
 ## Step 5: Check Linearity Assumption for Concinuous Variables
 
