@@ -284,8 +284,9 @@ MrOs %>%
   )
 ```
 
-
 ## Step 2: First Multivariable Model
+
+### Creating a dataset with NA observations removed
 
 Throughout our handling of multivariate models, we'll use the following structure to subset the data to only the variables we're considering *before* censoring observations with incomplete fields. 
 
@@ -296,6 +297,8 @@ step2_narm <- MrOs %>%
 
 ```
 
+### Creating the full model
+
 We'll add all the variables identified as important in step one to form our *full model*. Then we'll form a *reduced model* with every variable associated with a Wald test p-value less than 0.05 and compare the full and reduced model with the likelihood ratio test. The null hypothesis for the likelihood ratio test is $H_0: \beta_{inf} = 0$, $H_1: \beta_{inf} \neq 0$, where the criteria to reject is a p-value less than 0.05.
 
 ```{r}
@@ -305,8 +308,13 @@ full_model <-
 
 kable(summary(full_model)$coef)
 summary(full_model)$coef[,4] < 0.05 
+```
 
-# exclude site, hx. diabetes, hx stroke, hx cancer, PACE score. 
+### Creating the reduced model
+
+Based on the above output we will exclude site, hx. diabetes, hx stroke, hx cancer, PACE score from the reduced model, and perform the liklihood ratio test between the full and reduced models
+
+```{r}
 reduced_model <-  
   glm(falls ~  giage1 + mhpark +
         mhcopd + mharth + qlhealth + 
@@ -316,11 +324,11 @@ reduced_model <-
 kable(summary(reduced_model)$coef)
 
 lrtest(full_model, reduced_model) # can't throw them all away 
-
-
 ```
 
 The reduced model does *not* provide a better fit than the full model. Next, we'll use the same full model, but reduce the model by only one variable before taking the likelihood ratio. 
+
+### Removing one variable at a time:
 
 ```{r}
 # exclude site, 
