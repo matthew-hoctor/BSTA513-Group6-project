@@ -249,6 +249,8 @@ div.tocify {
 
 <div id="data-exploration" class="section level1">
 <h1>Data Exploration</h1>
+<div id="glimpse-skimr-output" class="section level2">
+<h2>glimpse &amp; skimr output:</h2>
 <pre class="r"><code>MrOs &lt;- readxl::read_excel(&quot;MrOS_Baseline_Falls_Project.xlsx&quot;)
 glimpse(MrOs)</code></pre>
 <pre><code>## Rows: 5,994
@@ -615,6 +617,9 @@ obj_classes</code></pre>
 ##  [7] &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;  
 ## [13] &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;  
 ## [19] &quot;numeric&quot;   &quot;numeric&quot;</code></pre>
+</div>
+<div id="creation-of-site-dummy-variables-and-outcome-variable" class="section level2">
+<h2>Creation of site dummy variables and outcome variable</h2>
 <p>We’ll consider every variable in the data frame other than patient ID as a candidate variable for the model. We’ll use Portland as the referent group for when site is considered as a categorical variable. The <strong>outcome</strong> of interest is having more than one fall in a given year.</p>
 <pre class="r"><code>unique(MrOs$site)</code></pre>
 <pre><code>## [1] &quot;BI&quot; &quot;MN&quot; &quot;PA&quot; &quot;PI&quot; &quot;PO&quot; &quot;SD&quot;</code></pre>
@@ -663,9 +668,9 @@ obj_classes</code></pre>
     mhfalln2 &gt; 1 ~ 1,
     mhfalln2 &lt;= 1 ~ 0
   ))</code></pre>
-<blockquote>
-<p>Groups sizes for each unique value of each categorical variable</p>
-</blockquote>
+</div>
+<div id="checki-groups-sizes-for-each-unique-value-of-each-categorical-variable" class="section level2">
+<h2>Checki Groups sizes for each unique value of each categorical variable</h2>
 <pre class="r"><code>MrOs_group_check = MrOs %&gt;% 
   select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, qlhealth,
          mhfalln2, st_1,st_2,st_3,st_4,st_5)
@@ -724,6 +729,7 @@ counts_list</code></pre>
 <p>Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it’s due to the way R handles <code>NA</code> in boolean operations. The presence of this numer in the above output is a signifier of missingness.</p>
 <p>This also serves as a sanity check for the above dummy variable generation. We see that the</p>
 <p>There are only 52 subjects with a history of Parkinson’s. That may be an issue later.</p>
+</div>
 </div>
 <div id="variable-seleciton" class="section level1">
 <h1>Variable Seleciton</h1>

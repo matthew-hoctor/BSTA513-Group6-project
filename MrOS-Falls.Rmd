@@ -58,6 +58,8 @@ regression_CI = function(pe, se, alpha) {
 
 # Data Exploration
 
+## glimpse & skimr output:
+
 ```{r import data}
 MrOs <- readxl::read_excel("MrOS_Baseline_Falls_Project.xlsx")
 glimpse(MrOs)
@@ -69,6 +71,8 @@ for(i in seq(1:length(MrOs))) {
 obj_classes
 
 ```
+
+## Creation of site dummy variables and outcome variable
 
 We'll consider every variable in the data frame other than patient ID as a candidate variable for the model. We'll use Portland as the referent group for when site is considered as a categorical variable. The **outcome** of interest is having more than one fall in a given year. 
 
@@ -123,8 +127,7 @@ MrOs <- MrOs %>%
 
 ```
 
-> Groups sizes for each unique value of each categorical variable
-
+## Checki Groups sizes for each unique value of each categorical variable
 
 ```{r check group sizes}
 MrOs_group_check = MrOs %>% 
