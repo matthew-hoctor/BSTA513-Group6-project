@@ -35,6 +35,7 @@ library(purrr)
 library(readxl)
 library(knitr)
 library(lmtest)
+library(gtsummary)
 ```
 
 ```{r, user defined functions, include=FALSE}
@@ -127,7 +128,7 @@ MrOs <- MrOs %>%
 
 ```
 
-## Checki Groups sizes for each unique value of each categorical variable
+## Check Groups sizes for each unique value of each categorical variable
 
 ```{r check group sizes}
 MrOs_group_check = MrOs %>% 
@@ -147,7 +148,7 @@ counts_list
 
 ```
 
-Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it's due to the way R handles `NA` in boolean operations. The presence of this numer in the above output is a signifier of missingness. 
+Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it's due to the way R handles `NA` in boolean operations. The presence of this number in the above output is a signifier of missingness. 
 
 This also serves as a sanity check for the above dummy variable generation. We see that the 
 
@@ -270,6 +271,19 @@ as.data.frame(t(tbl))
 Drawing up the odds ratios and confidence intervals hasn't brought us to any separate conclusion than the univariate Wald tests did as to which variables are retained at the end of this step. 
 
 **Note**: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude `b1fnd`. Nothing else would change.
+
+### gtsummary output for the paper
+
+```{r}
+MrOs %>% 
+  select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, qlhealth, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5) %>% 
+  tbl_uvregression(
+    method = glm,
+    y = falls,
+    method.args = list(family = 'binomial'),
+  )
+```
+
 
 ## Step 2: First Multivariable Model
 
