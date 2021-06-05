@@ -41,6 +41,8 @@ library(gtsummary)
 library(LogisticDx)
 library(ResourceSelection)
 library(multcomp)
+library(gridExtra)
+
 ```
 
 ```{r, user defined functions, include=FALSE}
@@ -136,26 +138,11 @@ MrOs <- MrOs %>%
 ## Check Groups sizes for each unique value of each categorical variable
 
 ```{r check group sizes}
-MrOs_group_check <- data.frame(
-  MrOs$site, 
-  MrOs$mhdiab,
-  MrOs$mhstrk,
-  MrOs$mhpark, 
-  MrOs$mhcopd,
-  MrOs$mharth,
-  MrOs$mhcancer,
-  MrOs$qlhealth,
-  MrOs$mhfalln2,
-  MrOs$st_1,
-  MrOs$st_2,
-  MrOs$st_3,
-  MrOs$st_4,
-  MrOs$st_5
-)
-
-# MrOs_group_check = MrOs %>%  # why did this break? 
-#   select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, qlhealth,
-#          mhfalln2, st_1,st_2,st_3,st_4,st_5)
+MrOs_group_check = MrOs %>%  # why did this break?
+  dplyr::select(
+    site, mhdiab, mhstrk, mhpark, mhcopd,
+    mharth, mhcancer, qlhealth, mhfalln2,
+    st_1,st_2,st_3,st_4,st_5)
 
 counts_list <- map(.x = as.list(MrOs_group_check), .f = function(x) {
   vector = unique(x)
@@ -304,7 +291,7 @@ Drawing up the odds ratios and confidence intervals hasn't brought us to any sep
 
 ```{r}
 MrOs %>% 
-  select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, qlhealth, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5) %>% 
+  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, qlhealth, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5) %>% 
   tbl_uvregression(
     method = glm,
     y = falls,
@@ -320,7 +307,7 @@ Throughout our handling of multivariate models, we'll use the following structur
 
 ```{r}
 step2_narm <- MrOs %>% 
-  select(-id,-b1tblkg,-b1thd,-mhfallv2) %>%
+  dplyr::select(-id,-b1tblkg,-b1thd,-mhfallv2) %>%
   drop_na()
 
 ```
@@ -491,7 +478,7 @@ We'll add back the subjects' race and cancer status to determine if their joint 
 
 ```{r}
 step3_narm1 <- MrOs %>% 
-  select(-id,-b1thd,-mhfallv2) %>%
+  dplyr::select(-id,-b1thd,-mhfallv2) %>%
   drop_na()
 
 # add back b1tblkg 
@@ -508,7 +495,7 @@ summary(check_again_lean)$coef[14,4] < 0.05 # lean body mass now significant
 
 ```{r}
 step3_narm2 <- MrOs %>% 
-  select(-id,-b1tblkg,-mhfallv2) %>%
+  dplyr::select(-id,-b1tblkg,-mhfallv2) %>%
   drop_na()
 
 # add back b1tblkg 
@@ -523,7 +510,7 @@ summary(check_again_hipBMD)$coef[14,4] < 0.05 # corrected hip bone mineral densi
 
 ```{r}
 step3_narm3 <- MrOs %>% 
-  select(-id,-mhfallv2) %>%
+  dplyr::select(-id,-mhfallv2) %>%
   drop_na()
 
 # add back b1tblkg 
@@ -546,7 +533,110 @@ df_1
 
 ```
 
-## Step 5: Check Linearity Assumption for Concinuous Variables
+## Step 5: Check Linearity Assumption for Concinuous Variables 
+
+```{r}
+# identify the confinuious variables 
+glimpse(step3_narm1)
+
+```
+
+
+
+
+
+
+    
+ 
+ 
+
+We'll employ the loess approach to screen for linearity in the log odds across the range of each continuous independent variable. For variables that are obviously nonlinear by loess, we'll use the fractional polynomial approach to identify the best transformation. 
+
+```{r}
+# loess subject age 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(giage1)) %>% 
+  map_df(rev)
+gg1 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = giage1, y = falls), method = "loess") + 
+  theme_minimal()
+
+# loess PACE score 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(pascore)) %>% 
+  map_df(rev)
+gg2 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = pascore, y = falls), method = "loess") + 
+  theme_minimal()
+
+# loess BMI 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(hwbmi)) %>% 
+  map_df(rev)
+gg3 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = hwbmi, y = falls), method = "loess") + 
+  theme_minimal()
+
+# loess grip strength 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(gsgrpavg)) %>% 
+  map_df(rev)
+gg4 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = gsgrpavg, y = falls), method = "loess") + 
+  theme_minimal()
+
+# loess walk speed 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(nfwlkspd)) %>% 
+  map_df(rev)
+gg5 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = nfwlkspd, y = falls), method = "loess") + 
+  theme_minimal()
+
+# loess corrected neck BMD 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(b1fnd)) %>% 
+  map_df(rev)
+gg6 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = b1fnd, y = falls), method = "loess") + 
+  theme_minimal()
+
+# loess body fat mass 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(b1tbfkg)) %>% 
+  map_df(rev)
+gg7 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = b1tbfkg, y = falls), method = "loess") + 
+  theme_minimal()
+
+# loess body lean mass 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(b1tblkg)) %>% 
+  map_df(rev)
+gg8 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = b1tblkg, y = falls), method = "loess") + 
+  theme_minimal()
+
+grid.arrange(gg1, 
+             gg2,
+             gg3,
+             gg4,
+             gg5,
+             gg6,
+             gg7,
+             gg8)
+
+```
+
+
 
 ## Step 6: Exploring Interactions
 
