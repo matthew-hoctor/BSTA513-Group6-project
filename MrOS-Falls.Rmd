@@ -39,7 +39,7 @@ library(gtsummary)
 library(linearspline)
 library(LogisticDx)
 library(ResourceSelection)
-library(multcomp)
+#library(multcomp)
 ```
 
 ```{r, user defined functions, include=FALSE}
