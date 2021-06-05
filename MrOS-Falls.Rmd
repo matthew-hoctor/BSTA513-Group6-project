@@ -40,9 +40,13 @@ library(gtsummary)
 library(mfp)
 library(LogisticDx)
 library(ResourceSelection)
+<<<<<<< HEAD
 library(multcomp)
 library(gridExtra)
 
+=======
+#library(multcomp)
+>>>>>>> 82ce76d656392abc2e0fe83ee320d75fb605b007
 ```
 
 ```{r, user defined functions, include=FALSE}
