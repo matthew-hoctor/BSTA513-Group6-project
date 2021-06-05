@@ -1256,6 +1256,9 @@ as.data.frame(summary(preliminary_final_model)$coef)
 (summary(preliminary_final_model)$coef[,4]) < 0.1
 ```
 
+
+
+
 # Checking the Fit of the Preliminary Final Model
 
 ## Assessing the fit of the preliminary final model
