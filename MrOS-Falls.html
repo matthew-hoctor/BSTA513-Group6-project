@@ -247,53 +247,6 @@ div.tocify {
 </div>
 
 
-<pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 4.0.5</code></pre>
-<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --</code></pre>
-<pre><code>## v ggplot2 3.3.3     v purrr   0.3.4
-## v tibble  3.1.1     v dplyr   1.0.5
-## v tidyr   1.1.3     v stringr 1.4.0
-## v readr   1.4.0     v forcats 0.5.1</code></pre>
-<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.0.4</code></pre>
-<pre><code>## Warning: package &#39;tibble&#39; was built under R version 4.0.5</code></pre>
-<pre><code>## Warning: package &#39;tidyr&#39; was built under R version 4.0.4</code></pre>
-<pre><code>## Warning: package &#39;readr&#39; was built under R version 4.0.4</code></pre>
-<pre><code>## Warning: package &#39;purrr&#39; was built under R version 4.0.4</code></pre>
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.0.4</code></pre>
-<pre><code>## Warning: package &#39;forcats&#39; was built under R version 4.0.4</code></pre>
-<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>library(purrr)
-library(readxl)</code></pre>
-<pre><code>## Warning: package &#39;readxl&#39; was built under R version 4.0.4</code></pre>
-<pre class="r"><code>library(knitr)</code></pre>
-<pre><code>## Warning: package &#39;knitr&#39; was built under R version 4.0.5</code></pre>
-<pre class="r"><code>library(lmtest)</code></pre>
-<pre><code>## Warning: package &#39;lmtest&#39; was built under R version 4.0.5</code></pre>
-<pre><code>## Loading required package: zoo</code></pre>
-<pre><code>## Warning: package &#39;zoo&#39; was built under R version 4.0.5</code></pre>
-<pre><code>## 
-## Attaching package: &#39;zoo&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     as.Date, as.Date.numeric</code></pre>
-<pre class="r"><code>regression_CI = function(pe, se, alpha) {
-  # returns log odds from regression coefficients;
-  # just quick_CI with the necessary reordering of bounds
-  ub = pe + qnorm(1-alpha/2)*se
-  lb = pe - qnorm(1-alpha/2)*se
-  if (ub &lt; lb){
-    return(data.frame(
-      &quot;point_estimate&quot; = pe,
-      &quot;lower_bound&quot; = ub,
-      &quot;upper_bound&quot; = lb))
-  }
-  return(data.frame(
-    &quot;point_estimate&quot; = pe,
-    &quot;lower_bound&quot; = lb,
-    &quot;upper_bound&quot; = ub))
-}</code></pre>
 <div id="data-exploration" class="section level1">
 <h1>Data Exploration</h1>
 <pre class="r"><code>MrOs &lt;- readxl::read_excel(&quot;MrOS_Baseline_Falls_Project.xlsx&quot;)

@@ -29,16 +29,15 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, libraries}
+```{r, libraries, include=FALSE}
 library(tidyverse)
 library(purrr)
 library(readxl)
 library(knitr)
 library(lmtest)
-
 ```
 
-```{r, user defined functions}
+```{r, user defined functions, include=FALSE}
 regression_CI = function(pe, se, alpha) {
   # returns log odds from regression coefficients;
   # just quick_CI with the necessary reordering of bounds
@@ -55,7 +54,6 @@ regression_CI = function(pe, se, alpha) {
     "lower_bound" = lb,
     "upper_bound" = ub))
 }
-
 ```
 
 # Data Exploration
