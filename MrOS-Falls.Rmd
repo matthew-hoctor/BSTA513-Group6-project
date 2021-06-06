@@ -161,11 +161,6 @@ counts_list
 
 ```
 
-```{r}
-
-
-```
-
 Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it's due to the way R handles `NA` in boolean operations. The presence of this number in the above output is a signifier of missingness. 
 
 This also serves as a sanity check for the above dummy variable generation. We see that the correct number of observations exist in each dummy variable by comparing the lower count in the dummy variables to the counts in `site`. 
@@ -222,6 +217,8 @@ map(.x =
 ```
 
 Slope coefficients pass our univariate Wald test ($p < 0.2 = \alpha$) for study site, age at enrollment, history of diabetes, history of stroke, history of COPD, history of Parkinson's, history of arthritis, history of cancer, PASE score, patient rating of overall health, body mass index (BMI), total body fat mass, average grip strength, walk speed, corrected femoral neck bone minderal density (BMD). The only variables excluded here are total body lean mass and corrected total hip BMD. 
+
+### Computing Wald p-value for each selected variable
 
 ```{r beta CI, OR CI, and Wald p-value for each model}
 models = list(
@@ -292,6 +289,8 @@ Drawing up the odds ratios and confidence intervals hasn't brought us to any sep
 
 ### gtsummary output for the paper
 
+We can use the 'tbl_uvregression' function from the 'gtsummary' package to create a publishable table with the above information:
+
 ```{r}
 MrOs %>% 
   dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, qlhealth, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5) %>% 
@@ -330,7 +329,7 @@ summary(full_model)$coef[,4] < 0.05
 
 ### Creating the reduced model
 
-Based on the above output we will exclude site, hx. diabetes, hx stroke, hx cancer, PACE score from the reduced model, and perform the liklihood ratio test between the full and reduced models
+Based on the above output we will exclude site, hx. diabetes, hx stroke, hx cancer, PACE score from the reduced model, and perform the liklihood ratio test between the full and reduced models.  We will utilize the 'lrtest' function from the 'lmtest' package to perform this computation:
 
 ```{r}
 reduced_model <-  
@@ -526,7 +525,7 @@ summary(check_again_both)$coef[14,4] < 0.05 # corrected hip bone mineral density
 
 ```
 
-We'll add lean body mass to the model from the last step to end step four. Addition of these variables dot *not* make the variables added back at the previous stage pass a univaraite Wald test where $\alpha = 0.05$, but that's inconsequential. 
+We'll add lean body mass to the model from the last step to end step four. Addition of these variables does *not* make the variables added back at the previous stage pass a univaraite Wald test where $\alpha = 0.05$, but that's inconsequential. 
 
 ```{r}
 step4_model <- check_again_lean
@@ -538,20 +537,15 @@ df_1
 
 ## Step 5: Check Linearity Assumption for Concinuous Variables 
 
+### Identifying continuous variables
+
 ```{r}
-# identify the confinuious variables 
+# identify the continuious variables 
 glimpse(step3_narm1)
 
 ```
 
-
-
-
-
-
-    
- 
- 
+### Graphical approach
 
 We'll employ the loess approach to screen for linearity in the log odds across the range of each continuous independent variable. For variables that are obviously nonlinear by loess, we'll use the fractional polynomial approach to identify the best transformation. 
 
@@ -646,6 +640,8 @@ grid.arrange(gg1,
              gg8)
 
 ```
+
+### Checking fractional polynomials
 
 We'll check the fractional polynomials for walk speed, corrected femoral neck bone mineral density, average left/right grip strength, BMI, and subject age. 
 
@@ -1203,7 +1199,7 @@ EMM_list <- list(
 
 ```
 
-### Finding statistically significant models
+### Finding statistically significant EMM
 
 ```{r}
 which(unlist(map(.x = EMM_list, 
@@ -1240,6 +1236,8 @@ length(unique(rownames(df_EMM)))
 
 The three statistically significant interaction terms: `mhpark:mhcopd`, `mhpark:mharth`, and `mharth:b1fnd`.
 
+### Examining number of subject in each interacting group
+
 ```{r, rule out interaction terms with mhpark}
 length(step4_narm[step4_narm$mhcopd == 1 & step4_narm$mhpark == 1,]$id)
 step4_narm[step4_narm$mhcopd == 1 & step4_narm$mhpark == 1,]
@@ -1249,7 +1247,7 @@ step4_narm[step4_narm$mharth == 1 & step4_narm$mhpark == 1,]
 
 ```
 
-There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's and a history of COPD and arthritis, respectively. Clearly, that is too few subjects for this interaction term to make sense. We can assess these interactions using the liklihood ratio test to compare them to the model produced by step 5:<review?>
+There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's and a history of COPD and arthritis, respectively. Clearly, that is too few subjects for this interaction term to make sense. We can assess these interactions using the liklihood ratio test to compare them to the model produced by step 5:
 
 ### `mhpark:mhcopd`
 
@@ -1257,18 +1255,23 @@ There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's 
 lrtest(EMM24,step5_model)
 ```
 
+This doesn't meet our criterion, $\alpha = 0.05$.
+
 ### `mhpark:mharth`
 
 ```{r}
 lrtest(EMM25,step5_model)
 ```
 
+This doesn't meet our criterion, $\alpha = 0.05$.
 
 ### `mharth:b1fnd`
 
 ```{r}
 lrtest(EMM48,step5_model)
 ```
+
+Let's keep this one.
 
 ### preliminary final model
 
@@ -1289,6 +1292,14 @@ as.data.frame(summary(preliminary_final_model)$coef)
 
 ## Assessing the fit of the preliminary final model
 
+For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
+
+```{r}
+hoslem.test(step3_narm1$falls, fitted(preliminary_final_model), g=10)
+```
+
+The small p-value reported above suggests that the model does not fit well.
+
 ## Assessing discriminative ability
 
 ## Logistic Regression diagnostics
@@ -1296,5 +1307,11 @@ as.data.frame(summary(preliminary_final_model)$coef)
 ### Graphical Assessment
 
 ### Numerical Assessment
+
+# References
+
+1. Sjoberg D. Gtsummary: Presentation-Ready Data Summary and Analytic Result Tables [R Package Gtsummary Version 1.4.1]. Comprehensive R Archive Network (CRAN); 2021. Accessed May 20, 2021. https://CRAN.R-project.org/package=gtsummary
+
+2. Solymos P, Keim J, Lele S. Resource Selection (Probability) Functions for Use-Availability Data [R Package ResourceSelection Version 0.3-5]. Comprehensive R Archive Network (CRAN); 2019. Accessed June 6, 2021. https://CRAN.R-project.org/package=ResourceSelection
 
 
