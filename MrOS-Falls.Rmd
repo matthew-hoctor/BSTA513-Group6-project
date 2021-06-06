@@ -1253,14 +1253,26 @@ There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's 
 
 ### `mhpark:mhcopd`
 
+```{r}
+lrtest(EMM24,step5_model)
+```
 
 
 ### `mhpark:mharth`
 
+```{r}
+#EMM25
+lrtest(EMM25,step5_model)
+
+```
 
 
 ### `mharth:b1fnd`
 
+```{r}
+#EMM48
+lrtest(EMM48,step5_model)
+```
 
 
 ```{r}
