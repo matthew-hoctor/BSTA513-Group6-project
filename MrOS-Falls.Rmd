@@ -320,7 +320,8 @@ We'll add all the variables identified as important in step one to form our *ful
 
 ```{r}
 full_model <- 
-  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,
+      family = "binomial",
       data = step2_narm)
 
 kable(summary(full_model)$coef)
@@ -336,6 +337,7 @@ reduced_model <-
   glm(falls ~  giage1 + mhpark +
         mhcopd + mharth + qlhealth + 
         hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,
+      family = "binomial",
       data = step2_narm)
 
 kable(summary(reduced_model)$coef)
@@ -343,14 +345,17 @@ kable(summary(reduced_model)$coef)
 lrtest(full_model, reduced_model) # can't throw them all away 
 ```
 
-The reduced model does *not* provide a better fit than the full model. Next, we'll use the same full model, but reduce the model by only one variable before taking the likelihood ratio. 
+The reduced model does *not* provide a better fit than the full model. Therefore, we'll use the same full model, but reduce the model by only one variable before taking the likelihood ratio. 
 
 ### Removing one variable at a time:
+
+#### site
 
 ```{r}
 # exclude site, 
 reduced_model <-  
   glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,  
+      family = "binomial",
       data = step2_narm)
 
 kable(summary(reduced_model)$coef)
@@ -359,10 +364,15 @@ lrtest(full_model, reduced_model) # exclude site
 
 ```
 
+Exclude site.
+
+#### DM2
+
 ```{r}
 # exclude hx. diabetes,
 reduced_model <-  
   glm(falls ~  giage1 + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      family = "binomial",
       data = step2_narm)
 
 kable(summary(reduced_model)$coef)
@@ -371,10 +381,15 @@ lrtest(full_model, reduced_model) # exclude hx. diabetes
 
 ```
 
+Exclude hx dm2.
+
+#### Stroke
+
 ```{r}
 # exclude hx stroke
 reduced_model <-  
   glm(falls ~  giage1 + mhdiab + mhpark + mhcopd + mharth + mhcancer + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      family = "binomial",
       data = step2_narm)
 
 kable(summary(reduced_model)$coef)
@@ -383,11 +398,15 @@ lrtest(full_model, reduced_model) # exclude hx stroke
 
 ```
 
+Exclude stroke hx.
+
+#### Cancer
 
 ```{r}
 # exclude hx cancer
 reduced_model <-  
   glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      family = "binomial",
       data = step2_narm)
 
 kable(summary(reduced_model)$coef)
@@ -396,12 +415,17 @@ lrtest(full_model, reduced_model) # exclude hx cancer
 
 ```
 
+Exclude cancer hx.
+
+#### PACE score
+
 ```{r}
 # exclude PACE score. 
 reduced_model <-  
   glm(falls ~  giage1 + mhpark +
         mhcopd + mharth + qlhealth + 
         hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,
+      family = "binomial",
       data = step2_narm)
 
 kable(summary(reduced_model)$coef)
@@ -411,6 +435,10 @@ lrtest(full_model, reduced_model) # don't exclude PACE score
 
 ```
 
+Include PACE score.
+
+#### Adding back in PACE score
+
 ```{r}
 # exclude site, hx. diabetes, hx stroke, hx cancer, PACE score. 
 full_model$call
@@ -419,7 +447,9 @@ full_model$call
 reduced_model <-  
    glm(formula = falls ~ giage1 + mhpark + mhcopd + 
     mharth + pascore + qlhealth + hwbmi + gsgrpavg + 
-    nfwlkspd + b1fnd + b1tbfkg + mhstrk, data = step2_narm)
+    nfwlkspd + b1fnd + b1tbfkg,
+      family = "binomial",
+    data = step2_narm)
 
 kable(summary(reduced_model)$coef)
 
@@ -427,7 +457,7 @@ lrtest(full_model, reduced_model)
 
 ```
 
-We've added back PACE score and history of stroke to achieve the most parsimonious model for which the full model does not provide significant advantage in performance by the likelihood ratio test.
+We've added back PACE score to achieve the most parsimonious model for which the full model does not provide significant advantage in performance by the likelihood ratio test.
 
 ## Step 3: Check Removed Covariate(s) Using the Change in $\beta_i$ Method
 
@@ -1290,7 +1320,7 @@ as.data.frame(summary(preliminary_final_model)$coef)
 
 # Checking the Fit of the Preliminary Final Model
 
-## Assessing the fit of the preliminary final model
+## The Hosmer-Lemeshow test
 
 For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
 
@@ -1298,9 +1328,16 @@ For the above model, there are several continuous variables; therefore $J\approx
 hoslem.test(step3_narm1$falls, fitted(preliminary_final_model), g=10)
 ```
 
-The small p-value reported above suggests that the model does not fit well.
+The small p-value reported above suggests that the model does not fit well; however out sample size > 1000, and therefore the Hosmer-Lemeshow test is likely to reject the model even if the fit is adequate.
 
 ## Assessing discriminative ability
+
+To assess the discriminative ability of the preliminary final model we can compute the AUROC:
+
+```{r}
+gof(preliminary_final_model)$auc
+```
+
 
 ## Logistic Regression diagnostics
 
