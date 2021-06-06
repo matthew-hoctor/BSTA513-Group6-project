@@ -40,13 +40,13 @@ library(gtsummary)
 library(mfp)
 library(LogisticDx)
 library(ResourceSelection)
-<<<<<<< HEAD
+#<<<<<<< HEAD
 library(multcomp)
 library(gridExtra)
 
-=======
+#=======
 #library(multcomp)
->>>>>>> 82ce76d656392abc2e0fe83ee320d75fb605b007
+#>>>>>>> 82ce76d656392abc2e0fe83ee320d75fb605b007
 ```
 
 ```{r, user defined functions, include=FALSE}
@@ -803,6 +803,8 @@ summary(step5_model)$coef
 
 ## Step 6: Exploring Interactions
 
+### Creating the interaction models
+
 Since there are thirteen variables in the model, there are ${13} \choose 2 $ $= 78$ total interaction models to screen.  
 
 ```{r, interaction screening aka wall of shame}
@@ -1201,6 +1203,8 @@ EMM_list <- list(
 
 ```
 
+### Finding statistically significant models
+
 ```{r}
 which(unlist(map(.x = EMM_list, 
     .f = function(x){
@@ -1245,7 +1249,19 @@ step4_narm[step4_narm$mharth == 1 & step4_narm$mhpark == 1,]
 
 ```
 
-There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's and a history of COPD and arthritis, respectively. Clearly, that is too few subjects for this interaction term to make sense. <review?>
+There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's and a history of COPD and arthritis, respectively. Clearly, that is too few subjects for this interaction term to make sense. We can assess these interactions using the liklihood ratio test to compare them to the model produced by step 5:<review?>
+
+### `mhpark:mhcopd`
+
+
+
+### `mhpark:mharth`
+
+
+
+### `mharth:b1fnd`
+
+
 
 ```{r}
 preliminary_final_model <- 
