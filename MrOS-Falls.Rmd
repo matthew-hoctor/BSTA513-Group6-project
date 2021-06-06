@@ -1257,23 +1257,20 @@ There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's 
 lrtest(EMM24,step5_model)
 ```
 
-
 ### `mhpark:mharth`
 
 ```{r}
-#EMM25
 lrtest(EMM25,step5_model)
-
 ```
 
 
 ### `mharth:b1fnd`
 
 ```{r}
-#EMM48
 lrtest(EMM48,step5_model)
 ```
 
+### preliminary final model
 
 ```{r}
 preliminary_final_model <- 
@@ -1287,9 +1284,6 @@ as.data.frame(summary(preliminary_final_model)$coef)
 # pass Wald test for alpha = 0.10   
 (summary(preliminary_final_model)$coef[,4]) < 0.1
 ```
-
-
-
 
 # Checking the Fit of the Preliminary Final Model
 
