@@ -84,7 +84,7 @@ obj_classes
 
 ```
 
-## Creation of site dummy variables and outcome variable
+## Creation of site & qlhealth dummy variables and outcome variable
 
 We'll consider every variable in the data frame other than patient ID as a candidate variable for the model. We'll use Portland as the referent group for when site is considered as a categorical variable. The **outcome** of interest is having more than one fall in a given year. 
 
@@ -139,13 +139,23 @@ MrOs <- MrOs %>%
 
 ```
 
+Creating the qlhealth dummy variables; 'Excellent' subjective health rating is used as the referent category:
+
+```{r}
+MrOs$qlh2 <- ifelse(MrOs$qlhealth == 2,1,0)
+MrOs$qlh3 <- ifelse(MrOs$qlhealth == 3,1,0)
+MrOs$qlh4 <- ifelse(MrOs$qlhealth == 4,1,0)
+MrOs$qlh5 <- ifelse(MrOs$qlhealth == 5,1,0)
+```
+
+
 ## Check Groups sizes for each unique value of each categorical variable
 
 ```{r check group sizes}
 MrOs_group_check = MrOs %>%  # why did this break?
-    dplyr::select(site, mhdiab, mhstrk, mhpark, mhcopd,
-    mharth, mhcancer, 
-    st_1,st_2,st_3,st_4,st_5)
+    dplyr::select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, 
+    st_1, st_2, st_3, st_4, st_5,
+    qlh2, qlh3, qlh4, qlh5)
 
 counts_list <- map(.x = as.list(MrOs_group_check), .f = function(x) {
   vector = unique(x)
@@ -175,11 +185,12 @@ We employ a type 1 error rate of $\alpha = 0.20$ for univariate Wald Tests and c
 
 The null hypothesis for the Wald test, which is repeatedly used throughout this report, is that the beta coefficient in question $\hat \beta_i$ is equal to zero. The test statistic for the Wald test is $W = \frac{\hat \beta_1}{\widehat{SE} (\hat \beta_1)} \sim N(0,1)$. In output tables from `R`, the Wald statistic $W$ is represented by `z.value`. The criteria to reject is $P(|z| > W) < \alpha$, where alpha is the type one error rate specified for the particular test. Here, as has been already stated, we'll use a p-value of 0.20 as our cutoff for statistical significance, but other values for $\alpha$ will be specified throughout. 
 
-
 ```{r}
 models = list(
   glm(falls ~ st_1 + st_2 + 
         st_3 + st_4 + st_5, data = MrOs, family = binomial()),
+  glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5
+      , data = MrOs, family = binomial()),
   glm(falls ~ qlhealth, data = MrOs, family = binomial()),
   glm(falls ~ giage1, data = MrOs, family = binomial()),
   glm(falls ~ mhdiab, data = MrOs, family = binomial()),
@@ -216,13 +227,12 @@ map(.x =
 
 ```
 
-Slope coefficients pass our univariate Wald test ($p < 0.2 = \alpha$) for study site, age at enrollment, history of diabetes, history of stroke, history of COPD, history of Parkinson's, history of arthritis, history of cancer, PASE score, patient rating of overall health, body mass index (BMI), total body fat mass, average grip strength, walk speed, corrected femoral neck bone minderal density (BMD). The only variables excluded here are total body lean mass and corrected total hip BMD. 
+Slope coefficients pass our univariate Wald test ($p < 0.2 = \alpha$) for study site, subjective health assessment, age at enrollment, history of diabetes, history of stroke, history of COPD, history of Parkinson's, history of arthritis, history of cancer, PASE score, body mass index (BMI), total body fat mass, average grip strength, walk speed, corrected femoral neck bone minderal density (BMD). The only variables excluded here are total body lean mass and corrected total hip BMD. 
 
 ### Computing Wald p-value for each selected variable
 
 ```{r beta CI, OR CI, and Wald p-value for each model}
 models = list(
-  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
   glm(falls ~ giage1, data = MrOs, family = binomial()),
   glm(falls ~ mhdiab, data = MrOs, family = binomial()),
   glm(falls ~ mhstrk, data = MrOs, family = binomial()),
@@ -231,7 +241,6 @@ models = list(
   glm(falls ~ mharth, data = MrOs, family = binomial()),
   glm(falls ~ mhcancer, data = MrOs, family = binomial()),
   glm(falls ~ pascore, data = MrOs, family = binomial()),
-  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
   glm(falls ~ hwbmi, data = MrOs, family = binomial()),
   glm(falls ~ b1tbfkg, data = MrOs, family = binomial()),
   glm(falls ~ gsgrpavg, data = MrOs, family = binomial()),
@@ -255,7 +264,7 @@ map(.x = models, .f = function(x) {
 
 > For each of the above tables, the beta coefficient CI is labeled with the name of the variable being assessed in the table. The odds ratio is on the second row. The p-value for the Wald test is in the first entry of the last column *Note*: NA simply signifies the cell as empty. 
 
-Since site is multilevel and categorical, it's computed separately. 
+Since site & health quality are multilevel and categorical, they are computed separately. 
 
 ```{r}
 site_model <- glm(falls ~ st_1 + st_2 + 
@@ -283,6 +292,34 @@ as.data.frame(t(tbl))
 
 ```
 
+Subjective health status:
+
+```{r}
+qlhealth_model <- glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5,
+                  data = MrOs,
+                  family = binomial())
+
+# slope coefficients 
+betas <- qlhealth_model$coef[2:6]
+# standard errors 
+ses <- as.data.frame(summary(qlhealth_model)$coef)$`Std. Error`[2:6]
+# confidence interval beta & CI 
+beta_upper_bounds <- betas + qnorm(1-0.05/2)*ses
+beta_lower_bounds <- betas - qnorm(1-0.05/2)*ses
+OR_upper_bounds <- exp(betas + qnorm(1-0.05/2)*ses)
+OR_lower_bounds <- exp(betas - qnorm(1-0.05/2)*ses)
+OR <- exp(betas)
+# formatting 
+tbl <- rbind(betas, 
+      beta_upper_bounds,
+      beta_lower_bounds, 
+      OR,
+      OR_upper_bounds, 
+      OR_lower_bounds)
+# output 
+as.data.frame(t(tbl))
+```
+
 Drawing up the odds ratios and confidence intervals hasn't brought us to any separate conclusion than the univariate Wald tests did as to which variables are retained at the end of this step. 
 
 **Note**: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude `b1fnd`. Nothing else would change.
@@ -293,13 +330,22 @@ We can use the 'tbl_uvregression' function from the 'gtsummary' package to creat
 
 ```{r}
 MrOs %>% 
-  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, qlhealth, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5) %>% 
+  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5, qlh2, qlh3, qlh4, qlh5) %>% 
   tbl_uvregression(
     method = glm,
     y = falls,
     method.args = list(family = 'binomial'),
   )
 ```
+
+### Collapsing 'qlhealth'
+
+Considering that 'good' subjective overall health is essentially the same as 'excellent' overall health (p=0.8), we can collapse the subjective overall health status variables into a single binary variable with value 0 for 'excellent'-'good health' ('qlhealth' = 1-2), and value 1 for 'fair' to 'very poor' health ('qlhealth' = 3-5):
+
+```{r}
+MrOs$qlh <- ifelse(MrOs$qlhealth == 1 | MrOs$qlhealth == 2, 0, 1)
+```
+
 
 ## Step 2: First Multivariable Model
 
@@ -1341,6 +1387,14 @@ as.data.frame(summary(preliminary_final_model)$coef)
 # pass Wald test for alpha = 0.10   
 (summary(preliminary_final_model)$coef[,4]) < 0.1
 ```
+
+```{r}
+mod.qlhealth <- glm(formula = falls ~ factor(qlhealth),
+                    family = "binomial",
+                    data = step3_narm1)
+summary(mod.qlhealth)
+```
+
 
 # Checking the Fit of the Preliminary Final Model
 

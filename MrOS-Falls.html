@@ -618,8 +618,8 @@ obj_classes</code></pre>
 ## [13] &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;   &quot;numeric&quot;  
 ## [19] &quot;numeric&quot;   &quot;numeric&quot;</code></pre>
 </div>
-<div id="creation-of-site-dummy-variables-and-outcome-variable" class="section level2">
-<h2>Creation of site dummy variables and outcome variable</h2>
+<div id="creation-of-site-qlhealth-dummy-variables-and-outcome-variable" class="section level2">
+<h2>Creation of site &amp; qlhealth dummy variables and outcome variable</h2>
 <p>We’ll consider every variable in the data frame other than patient ID as a candidate variable for the model. We’ll use Portland as the referent group for when site is considered as a categorical variable. The <strong>outcome</strong> of interest is having more than one fall in a given year.</p>
 <pre class="r"><code>unique(MrOs$site)</code></pre>
 <pre><code>## [1] &quot;BI&quot; &quot;MN&quot; &quot;PA&quot; &quot;PI&quot; &quot;PO&quot; &quot;SD&quot;</code></pre>
@@ -668,13 +668,18 @@ obj_classes</code></pre>
     mhfalln2 &gt; 1 ~ 1,
     mhfalln2 &lt;= 1 ~ 0
   ))</code></pre>
+<p>Creating the qlhealth dummy variables; ‘Excellent’ subjective health rating is used as the referent category:</p>
+<pre class="r"><code>MrOs$qlh2 &lt;- ifelse(MrOs$qlhealth == 2,1,0)
+MrOs$qlh3 &lt;- ifelse(MrOs$qlhealth == 3,1,0)
+MrOs$qlh4 &lt;- ifelse(MrOs$qlhealth == 4,1,0)
+MrOs$qlh5 &lt;- ifelse(MrOs$qlhealth == 5,1,0)</code></pre>
 </div>
 <div id="check-groups-sizes-for-each-unique-value-of-each-categorical-variable" class="section level2">
 <h2>Check Groups sizes for each unique value of each categorical variable</h2>
 <pre class="r"><code>MrOs_group_check = MrOs %&gt;%  # why did this break?
-    dplyr::select(site, mhdiab, mhstrk, mhpark, mhcopd,
-    mharth, mhcancer, 
-    st_1,st_2,st_3,st_4,st_5)
+    dplyr::select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, 
+    st_1, st_2, st_3, st_4, st_5,
+    qlh2, qlh3, qlh4, qlh5)
 
 counts_list &lt;- map(.x = as.list(MrOs_group_check), .f = function(x) {
   vector = unique(x)
@@ -721,7 +726,19 @@ counts_list</code></pre>
 ## [1] 4989 1005
 ## 
 ## $st_5
-## [1] 4981 1013</code></pre>
+## [1] 4981 1013
+## 
+## $qlh2
+## [1] 2876 3120 5994
+## 
+## $qlh3
+## [1]  762 5234 5994
+## 
+## $qlh4
+## [1] 5912   84 5994
+## 
+## $qlh5
+## [1] 5979   17 5994</code></pre>
 <p>Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it’s due to the way R handles <code>NA</code> in boolean operations. The presence of this number in the above output is a signifier of missingness.</p>
 <p>This also serves as a sanity check for the above dummy variable generation. We see that the correct number of observations exist in each dummy variable by comparing the lower count in the dummy variables to the counts in <code>site</code>.</p>
 <p>There are only 52 subjects with a history of Parkinson’s. That may be an issue later.</p>
@@ -736,6 +753,8 @@ counts_list</code></pre>
 <pre class="r"><code>models = list(
   glm(falls ~ st_1 + st_2 + 
         st_3 + st_4 + st_5, data = MrOs, family = binomial()),
+  glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5
+      , data = MrOs, family = binomial()),
   glm(falls ~ qlhealth, data = MrOs, family = binomial()),
   glm(falls ~ giage1, data = MrOs, family = binomial()),
   glm(falls ~ mhdiab, data = MrOs, family = binomial()),
@@ -780,93 +799,100 @@ map(.x =
 ## 
 ## [[2]]
 ##               Estimate Std..Error    z.value      Pr...z..
-## (Intercept) -2.5153390 0.11075597 -22.710642 3.516704e-114
-## qlhealth     0.4219546 0.05376494   7.848137  4.222642e-15
+## (Intercept) -2.0329777 0.07303767 -27.834648 1.652517e-170
+## qlh2         0.3104687 0.09037541   3.435322  5.918496e-04
+## qlh3         0.8237946 0.12257383   6.720803  1.807257e-11
+## qlh4         1.4220686 0.29417256   4.834131  1.337287e-06
+## qlh5         1.8506561 0.60991898   3.034265  2.411221e-03
 ## 
 ## [[3]]
-##                Estimate  Std..Error   z.value     Pr...z..
-## (Intercept) -4.95719888 0.502912673 -9.856977 6.394537e-23
-## giage1       0.04381403 0.006765748  6.475859 9.427433e-11
-## 
-## [[4]]
-##               Estimate Std..Error    z.value     Pr...z..
-## (Intercept) -1.7742562 0.04141219 -42.843813 0.0000000000
-## mhdiab       0.3855609 0.11716838   3.290657 0.0009995381
-## 
-## [[5]]
-##              Estimate Std..Error    z.value    Pr...z..
-## (Intercept) -1.763352 0.04016956 -43.897728 0.000000000
-## mhstrk       0.539577 0.15225699   3.543857 0.000394319
-## 
-## [[6]]
-##               Estimate Std..Error    z.value     Pr...z..
-## (Intercept) -1.8029745  0.0418520 -43.079767 0.000000e+00
-## mhcopd       0.5998285  0.1117919   5.365582 8.068873e-08
-## 
-## [[7]]
-##              Estimate Std..Error    z.value     Pr...z..
-## (Intercept) -1.747731  0.0390499 -44.756347 0.000000e+00
-## mhpark       1.687106  0.3504974   4.813462 1.483375e-06
-## 
-## [[8]]
-##              Estimate Std..Error    z.value      Pr...z..
-## (Intercept) -2.038375 0.05942976 -34.298897 8.150162e-258
-## mharth       0.591204 0.07862960   7.518847  5.526141e-14
-## 
-## [[9]]
-##               Estimate Std..Error    z.value   Pr...z..
-## (Intercept) -1.8042362 0.04683182 -38.525859 0.00000000
-## mhcancer     0.2454726 0.08330589   2.946642 0.00321245
-## 
-## [[10]]
-##                 Estimate   Std..Error    z.value     Pr...z..
-## (Intercept) -1.515613225 0.0932491883 -16.253366 2.114290e-59
-## pascore     -0.001456787 0.0005846094  -2.491899 1.270623e-02
-## 
-## [[11]]
 ##               Estimate Std..Error    z.value      Pr...z..
 ## (Intercept) -2.5153390 0.11075597 -22.710642 3.516704e-114
 ## qlhealth     0.4219546 0.05376494   7.848137  4.222642e-15
 ## 
+## [[4]]
+##                Estimate  Std..Error   z.value     Pr...z..
+## (Intercept) -4.95719888 0.502912673 -9.856977 6.394537e-23
+## giage1       0.04381403 0.006765748  6.475859 9.427433e-11
+## 
+## [[5]]
+##               Estimate Std..Error    z.value     Pr...z..
+## (Intercept) -1.7742562 0.04141219 -42.843813 0.0000000000
+## mhdiab       0.3855609 0.11716838   3.290657 0.0009995381
+## 
+## [[6]]
+##              Estimate Std..Error    z.value    Pr...z..
+## (Intercept) -1.763352 0.04016956 -43.897728 0.000000000
+## mhstrk       0.539577 0.15225699   3.543857 0.000394319
+## 
+## [[7]]
+##               Estimate Std..Error    z.value     Pr...z..
+## (Intercept) -1.8029745  0.0418520 -43.079767 0.000000e+00
+## mhcopd       0.5998285  0.1117919   5.365582 8.068873e-08
+## 
+## [[8]]
+##              Estimate Std..Error    z.value     Pr...z..
+## (Intercept) -1.747731  0.0390499 -44.756347 0.000000e+00
+## mhpark       1.687106  0.3504974   4.813462 1.483375e-06
+## 
+## [[9]]
+##              Estimate Std..Error    z.value      Pr...z..
+## (Intercept) -2.038375 0.05942976 -34.298897 8.150162e-258
+## mharth       0.591204 0.07862960   7.518847  5.526141e-14
+## 
+## [[10]]
+##               Estimate Std..Error    z.value   Pr...z..
+## (Intercept) -1.8042362 0.04683182 -38.525859 0.00000000
+## mhcancer     0.2454726 0.08330589   2.946642 0.00321245
+## 
+## [[11]]
+##                 Estimate   Std..Error    z.value     Pr...z..
+## (Intercept) -1.515613225 0.0932491883 -16.253366 2.114290e-59
+## pascore     -0.001456787 0.0005846094  -2.491899 1.270623e-02
+## 
 ## [[12]]
+##               Estimate Std..Error    z.value      Pr...z..
+## (Intercept) -2.5153390 0.11075597 -22.710642 3.516704e-114
+## qlhealth     0.4219546 0.05376494   7.848137  4.222642e-15
+## 
+## [[13]]
 ##                Estimate  Std..Error   z.value     Pr...z..
 ## (Intercept) -2.69687390 0.275876498 -9.775657 1.432256e-22
 ## hwbmi        0.03498152 0.009827731  3.559470 3.716035e-04
 ## 
-## [[13]]
+## [[14]]
 ##                Estimate  Std..Error    z.value     Pr...z..
 ## (Intercept) -2.29343068 0.126722662 -18.098031 3.302639e-73
 ## b1tbfkg      0.02490161 0.005313164   4.686777 2.775415e-06
 ## 
-## [[14]]
+## [[15]]
 ##                 Estimate  Std..Error    z.value     Pr...z..
 ## (Intercept) -1.670798121 0.313072432 -5.3367782 9.461268e-08
 ## b1tblkg     -0.001198906 0.005439674 -0.2204003 8.255594e-01
 ## 
-## [[15]]
+## [[16]]
 ##                Estimate  Std..Error    z.value     Pr...z..
 ## (Intercept)  0.08840508 0.193110532  0.4577952 6.470996e-01
 ## gsgrpavg    -0.04789594 0.005091431 -9.4071670 5.096892e-21
 ## 
-## [[16]]
+## [[17]]
 ##                Estimate Std..Error    z.value     Pr...z..
 ## (Intercept)  0.04826681  0.2131746  0.2264192 8.208754e-01
 ## nfwlkspd    -1.49582496  0.1792923 -8.3429400 7.246597e-17
 ## 
-## [[17]]
+## [[18]]
 ##               Estimate Std..Error   z.value     Pr...z..
 ## (Intercept) -2.1797433  0.2416397 -9.020635 1.870026e-19
 ## b1fnd        0.5681193  0.3005950  1.889982 5.876034e-02
 ## 
-## [[18]]
+## [[19]]
 ##               Estimate Std..Error   z.value     Pr...z..
 ## (Intercept) -2.0311866  0.2720271 -7.466855 8.213445e-14
 ## b1thd        0.3117375  0.2788094  1.118103 2.635232e-01</code></pre>
-<p>Slope coefficients pass our univariate Wald test (<span class="math inline">\(p &lt; 0.2 = \alpha\)</span>) for study site, age at enrollment, history of diabetes, history of stroke, history of COPD, history of Parkinson’s, history of arthritis, history of cancer, PASE score, patient rating of overall health, body mass index (BMI), total body fat mass, average grip strength, walk speed, corrected femoral neck bone minderal density (BMD). The only variables excluded here are total body lean mass and corrected total hip BMD.</p>
+<p>Slope coefficients pass our univariate Wald test (<span class="math inline">\(p &lt; 0.2 = \alpha\)</span>) for study site, subjective health assessment, age at enrollment, history of diabetes, history of stroke, history of COPD, history of Parkinson’s, history of arthritis, history of cancer, PASE score, body mass index (BMI), total body fat mass, average grip strength, walk speed, corrected femoral neck bone minderal density (BMD). The only variables excluded here are total body lean mass and corrected total hip BMD.</p>
 <div id="computing-wald-p-value-for-each-selected-variable" class="section level3">
 <h3>Computing Wald p-value for each selected variable</h3>
 <pre class="r"><code>models = list(
-  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
   glm(falls ~ giage1, data = MrOs, family = binomial()),
   glm(falls ~ mhdiab, data = MrOs, family = binomial()),
   glm(falls ~ mhstrk, data = MrOs, family = binomial()),
@@ -875,7 +901,6 @@ map(.x =
   glm(falls ~ mharth, data = MrOs, family = binomial()),
   glm(falls ~ mhcancer, data = MrOs, family = binomial()),
   glm(falls ~ pascore, data = MrOs, family = binomial()),
-  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
   glm(falls ~ hwbmi, data = MrOs, family = binomial()),
   glm(falls ~ b1tbfkg, data = MrOs, family = binomial()),
   glm(falls ~ gsgrpavg, data = MrOs, family = binomial()),
@@ -895,83 +920,73 @@ map(.x = models, .f = function(x) {
   return((table)) # put kable() back
 })</code></pre>
 <pre><code>## [[1]]
-##          point_estimate lower_bound upper_bound            p
-## qlhealth      0.4219546   0.3165772   0.5273319 4.222642e-15
-## OR            1.5249393   1.3724222   1.6944055           NA
-## 
-## [[2]]
 ##        point_estimate lower_bound upper_bound            p
 ## giage1     0.04381403  0.03055341  0.05707465 9.427433e-11
 ## OR         1.04478804  1.03102495  1.05873484           NA
 ## 
-## [[3]]
+## [[2]]
 ##        point_estimate lower_bound upper_bound            p
 ## mhdiab      0.3855609   0.1559151   0.6152067 0.0009995381
 ## OR          1.4704389   1.1687270   1.8500390           NA
 ## 
-## [[4]]
+## [[3]]
 ##        point_estimate lower_bound upper_bound           p
 ## mhstrk       0.539577   0.2411588   0.8379952 0.000394319
 ## OR           1.715281   1.2727231   2.3117278          NA
 ## 
-## [[5]]
+## [[4]]
 ##        point_estimate lower_bound upper_bound            p
 ## mhcopd      0.5998285   0.3807204   0.8189366 8.068873e-08
 ## OR          1.8218064   1.4633385   2.2680867           NA
 ## 
-## [[6]]
+## [[5]]
 ##        point_estimate lower_bound upper_bound            p
 ## mhpark       1.687106    1.000144    2.374068 1.483375e-06
 ## OR           5.403820    2.718673   10.741001           NA
 ## 
-## [[7]]
+## [[6]]
 ##        point_estimate lower_bound upper_bound            p
 ## mharth       0.591204   0.4370928   0.7453152 5.526141e-14
 ## OR           1.806162   1.5481997   2.1071054           NA
 ## 
-## [[8]]
+## [[7]]
 ##          point_estimate lower_bound upper_bound          p
 ## mhcancer      0.2454726  0.08219608   0.4087492 0.00321245
 ## OR            1.2782253  1.08566866   1.5049342         NA
 ## 
-## [[9]]
+## [[8]]
 ##         point_estimate lower_bound   upper_bound          p
 ## pascore   -0.001456787  -0.0026026 -0.0003109739 0.01270623
 ## OR         0.998544273   0.9974008  0.9996890744         NA
 ## 
-## [[10]]
-##          point_estimate lower_bound upper_bound            p
-## qlhealth      0.4219546   0.3165772   0.5273319 4.222642e-15
-## OR            1.5249393   1.3724222   1.6944055           NA
-## 
-## [[11]]
+## [[9]]
 ##       point_estimate lower_bound upper_bound            p
 ## hwbmi     0.03498152  0.01571952  0.05424352 0.0003716035
 ## OR        1.03560057  1.01584372  1.05574166           NA
 ## 
-## [[12]]
+## [[10]]
 ##         point_estimate lower_bound upper_bound            p
 ## b1tbfkg     0.02490161    0.014488  0.03531522 2.775415e-06
 ## OR          1.02521425    1.014593  1.03594621           NA
 ## 
-## [[13]]
+## [[11]]
 ##          point_estimate lower_bound upper_bound            p
 ## gsgrpavg    -0.04789594 -0.05787496 -0.03791692 5.096892e-21
 ## OR           0.95323298  0.94376795  0.96279293           NA
 ## 
-## [[14]]
+## [[12]]
 ##          point_estimate lower_bound upper_bound            p
 ## nfwlkspd     -1.4958250  -1.8472314   -1.144418 7.246597e-17
 ## OR            0.2240637   0.1576731    0.318409           NA
 ## 
-## [[15]]
+## [[13]]
 ##       point_estimate lower_bound upper_bound          p
 ## b1fnd      0.5681193 -0.02103617    1.157275 0.05876034
 ## OR         1.7649445  0.97918355    3.181252         NA</code></pre>
 <blockquote>
 <p>For each of the above tables, the beta coefficient CI is labeled with the name of the variable being assessed in the table. The odds ratio is on the second row. The p-value for the Wald test is in the first entry of the last column <em>Note</em>: NA simply signifies the cell as empty.</p>
 </blockquote>
-<p>Since site is multilevel and categorical, it’s computed separately.</p>
+<p>Since site &amp; health quality are multilevel and categorical, they are computed separately.</p>
 <pre class="r"><code>site_model &lt;- glm(falls ~ st_1 + st_2 + 
         st_3 + st_4 + st_5, data = MrOs, family = binomial())
 
@@ -1006,6 +1021,42 @@ as.data.frame(t(tbl))</code></pre>
 ## st_3       0.9049929
 ## st_4       0.7519955
 ## st_5       0.7293018</code></pre>
+<p>Subjective health status:</p>
+<pre class="r"><code>qlhealth_model &lt;- glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5,
+                  data = MrOs,
+                  family = binomial())
+
+# slope coefficients 
+betas &lt;- qlhealth_model$coef[2:6]
+# standard errors 
+ses &lt;- as.data.frame(summary(qlhealth_model)$coef)$`Std. Error`[2:6]
+# confidence interval beta &amp; CI 
+beta_upper_bounds &lt;- betas + qnorm(1-0.05/2)*ses
+beta_lower_bounds &lt;- betas - qnorm(1-0.05/2)*ses
+OR_upper_bounds &lt;- exp(betas + qnorm(1-0.05/2)*ses)
+OR_lower_bounds &lt;- exp(betas - qnorm(1-0.05/2)*ses)
+OR &lt;- exp(betas)
+# formatting 
+tbl &lt;- rbind(betas, 
+      beta_upper_bounds,
+      beta_lower_bounds, 
+      OR,
+      OR_upper_bounds, 
+      OR_lower_bounds)
+# output 
+as.data.frame(t(tbl))</code></pre>
+<pre><code>##          betas beta_upper_bounds beta_lower_bounds       OR OR_upper_bounds
+## qlh2 0.3104687         0.4876012         0.1333361 1.364064        1.628405
+## qlh3 0.8237946         1.0640349         0.5835543 2.279132        2.898041
+## qlh4 1.4220686         1.9986362         0.8455010 4.145687        7.378986
+## qlh5 1.8506561         3.0460754         0.6552369 6.363994       21.032637
+## NA.         NA                NA                NA       NA              NA
+##      OR_lower_bounds
+## qlh2        1.142634
+## qlh3        1.792398
+## qlh4        2.329144
+## qlh5        1.925599
+## NA.               NA</code></pre>
 <p>Drawing up the odds ratios and confidence intervals hasn’t brought us to any separate conclusion than the univariate Wald tests did as to which variables are retained at the end of this step.</p>
 <p><strong>Note</strong>: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude <code>b1fnd</code>. Nothing else would change.</p>
 </div>
@@ -1013,18 +1064,18 @@ as.data.frame(t(tbl))</code></pre>
 <h3>gtsummary output for the paper</h3>
 <p>We can use the ‘tbl_uvregression’ function from the ‘gtsummary’ package to create a publishable table with the above information:</p>
 <pre class="r"><code>MrOs %&gt;% 
-  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, qlhealth, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5) %&gt;% 
+  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5, qlh2, qlh3, qlh4, qlh5) %&gt;% 
   tbl_uvregression(
     method = glm,
     y = falls,
     method.args = list(family = &#39;binomial&#39;),
   )</code></pre>
-<div id="suvejfrsjk" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="gqaclursbk" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#suvejfrsjk .gt_table {
+#gqaclursbk .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1049,7 +1100,7 @@ as.data.frame(t(tbl))</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_heading {
+#gqaclursbk .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1061,7 +1112,7 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_title {
+#gqaclursbk .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1071,7 +1122,7 @@ as.data.frame(t(tbl))</code></pre>
   border-bottom-width: 0;
 }
 
-#suvejfrsjk .gt_subtitle {
+#gqaclursbk .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1081,13 +1132,13 @@ as.data.frame(t(tbl))</code></pre>
   border-top-width: 0;
 }
 
-#suvejfrsjk .gt_bottom_border {
+#gqaclursbk .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_col_headings {
+#gqaclursbk .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1102,7 +1153,7 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_col_heading {
+#gqaclursbk .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1122,7 +1173,7 @@ as.data.frame(t(tbl))</code></pre>
   overflow-x: hidden;
 }
 
-#suvejfrsjk .gt_column_spanner_outer {
+#gqaclursbk .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1134,15 +1185,15 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 4px;
 }
 
-#suvejfrsjk .gt_column_spanner_outer:first-child {
+#gqaclursbk .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#suvejfrsjk .gt_column_spanner_outer:last-child {
+#gqaclursbk .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#suvejfrsjk .gt_column_spanner {
+#gqaclursbk .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1154,7 +1205,7 @@ as.data.frame(t(tbl))</code></pre>
   width: 100%;
 }
 
-#suvejfrsjk .gt_group_heading {
+#gqaclursbk .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1176,7 +1227,7 @@ as.data.frame(t(tbl))</code></pre>
   vertical-align: middle;
 }
 
-#suvejfrsjk .gt_empty_group_heading {
+#gqaclursbk .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1191,15 +1242,15 @@ as.data.frame(t(tbl))</code></pre>
   vertical-align: middle;
 }
 
-#suvejfrsjk .gt_from_md > :first-child {
+#gqaclursbk .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#suvejfrsjk .gt_from_md > :last-child {
+#gqaclursbk .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#suvejfrsjk .gt_row {
+#gqaclursbk .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1218,7 +1269,7 @@ as.data.frame(t(tbl))</code></pre>
   overflow-x: hidden;
 }
 
-#suvejfrsjk .gt_stub {
+#gqaclursbk .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1230,7 +1281,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-left: 12px;
 }
 
-#suvejfrsjk .gt_summary_row {
+#gqaclursbk .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1240,7 +1291,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 5px;
 }
 
-#suvejfrsjk .gt_first_summary_row {
+#gqaclursbk .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1250,7 +1301,7 @@ as.data.frame(t(tbl))</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_grand_summary_row {
+#gqaclursbk .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1260,7 +1311,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 5px;
 }
 
-#suvejfrsjk .gt_first_grand_summary_row {
+#gqaclursbk .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1270,11 +1321,11 @@ as.data.frame(t(tbl))</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_striped {
+#gqaclursbk .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#suvejfrsjk .gt_table_body {
+#gqaclursbk .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1283,7 +1334,7 @@ as.data.frame(t(tbl))</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_footnotes {
+#gqaclursbk .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1297,13 +1348,13 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_footnote {
+#gqaclursbk .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#suvejfrsjk .gt_sourcenotes {
+#gqaclursbk .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1317,41 +1368,41 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#suvejfrsjk .gt_sourcenote {
+#gqaclursbk .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#suvejfrsjk .gt_left {
+#gqaclursbk .gt_left {
   text-align: left;
 }
 
-#suvejfrsjk .gt_center {
+#gqaclursbk .gt_center {
   text-align: center;
 }
 
-#suvejfrsjk .gt_right {
+#gqaclursbk .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#suvejfrsjk .gt_font_normal {
+#gqaclursbk .gt_font_normal {
   font-weight: normal;
 }
 
-#suvejfrsjk .gt_font_bold {
+#gqaclursbk .gt_font_bold {
   font-weight: bold;
 }
 
-#suvejfrsjk .gt_font_italic {
+#gqaclursbk .gt_font_italic {
   font-style: italic;
 }
 
-#suvejfrsjk .gt_super {
+#gqaclursbk .gt_super {
   font-size: 65%;
 }
 
-#suvejfrsjk .gt_footnote_marks {
+#gqaclursbk .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
@@ -1409,11 +1460,6 @@ as.data.frame(t(tbl))</code></pre>
 <td class="gt_row gt_center">0.00</td>
 <td class="gt_row gt_center">0.00, 0.00</td>
 <td class="gt_row gt_center">0.013</td></tr>
-    <tr><td class="gt_row gt_left">qlhealth</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.42</td>
-<td class="gt_row gt_center">0.32, 0.53</td>
-<td class="gt_row gt_center">&lt;0.001</td></tr>
     <tr><td class="gt_row gt_left">hwbmi</td>
 <td class="gt_row gt_center">5217</td>
 <td class="gt_row gt_center">0.03</td>
@@ -1474,6 +1520,26 @@ as.data.frame(t(tbl))</code></pre>
 <td class="gt_row gt_center">-0.18</td>
 <td class="gt_row gt_center">-0.40, 0.02</td>
 <td class="gt_row gt_center">0.090</td></tr>
+    <tr><td class="gt_row gt_left">qlh2</td>
+<td class="gt_row gt_center">5224</td>
+<td class="gt_row gt_center">0.02</td>
+<td class="gt_row gt_center">-0.13, 0.17</td>
+<td class="gt_row gt_center">0.8</td></tr>
+    <tr><td class="gt_row gt_left">qlh3</td>
+<td class="gt_row gt_center">5224</td>
+<td class="gt_row gt_center">0.60</td>
+<td class="gt_row gt_center">0.39, 0.81</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">qlh4</td>
+<td class="gt_row gt_center">5224</td>
+<td class="gt_row gt_center">1.1</td>
+<td class="gt_row gt_center">0.55, 1.7</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">qlh5</td>
+<td class="gt_row gt_center">5224</td>
+<td class="gt_row gt_center">1.6</td>
+<td class="gt_row gt_center">0.31, 2.8</td>
+<td class="gt_row gt_center">0.010</td></tr>
   </tbody>
   
   <tfoot>
@@ -1492,6 +1558,11 @@ as.data.frame(t(tbl))</code></pre>
   </tfoot>
 </table>
 </div>
+</div>
+<div id="collapsing-qlhealth" class="section level3">
+<h3>Collapsing ‘qlhealth’</h3>
+<p>Considering that ‘good’ subjective overall health is essentially the same as ‘excellent’ overall health (p=0.8), we can collapse the subjective overall health status variables into a single binary variable with value 0 for ‘excellent’-‘good health’ (‘qlhealth’ = 1-2), and value 1 for ‘fair’ to ‘very poor’ health (‘qlhealth’ = 3-5):</p>
+<pre class="r"><code>MrOs$qlh &lt;- ifelse(MrOs$qlhealth == 1 | MrOs$qlhealth == 2, 0, 1)</code></pre>
 </div>
 </div>
 <div id="step-2-first-multivariable-model" class="section level2">
@@ -3069,7 +3140,7 @@ df_1</code></pre>
 <pre class="r"><code># identify the continuious variables 
 glimpse(step3_narm1)</code></pre>
 <pre><code>## Rows: 5,092
-## Columns: 23
+## Columns: 28
 ## $ site     &lt;chr&gt; &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;BI&quot;, &quot;~
 ## $ giage1   &lt;dbl&gt; 67, 67, 72, 65, 78, 69, 65, 65, 72, 67, 66, 73, 68, 72, 65, 7~
 ## $ mhdiab   &lt;dbl&gt; 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
@@ -3092,7 +3163,12 @@ glimpse(step3_narm1)</code></pre>
 ## $ st_3     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
 ## $ st_4     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
 ## $ st_5     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
-## $ falls    &lt;dbl&gt; 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~</code></pre>
+## $ falls    &lt;dbl&gt; 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
+## $ qlh2     &lt;dbl&gt; 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0~
+## $ qlh3     &lt;dbl&gt; 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
+## $ qlh4     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
+## $ qlh5     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~
+## $ qlh      &lt;dbl&gt; 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0~</code></pre>
 </div>
 <div id="graphical-approach" class="section level3">
 <h3>Graphical approach</h3>
@@ -5117,22 +5193,23 @@ df_EMM</code></pre>
 <pre><code>## Warning: Unknown or uninitialised column: `id`.</code></pre>
 <pre><code>## [1] 0</code></pre>
 <pre class="r"><code>step4_narm[step4_narm$mhcopd == 1 &amp; step4_narm$mhpark == 1,]</code></pre>
-<pre><code>## # A tibble: 4 x 25
+<pre><code>## # A tibble: 4 x 30
 ##   site  giage1 mhdiab mhstrk mhpark mhcopd mharth mhcancer pascore qlhealth
 ##   &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
 ## 1 BI        71      0      0      1      1      1        0   108.         3
 ## 2 SD        72      0      0      1      1      1        0    69.6        2
 ## 3 PA        76      0      0      1      1      0        1   105.         2
 ## 4 SD        76      0      0      1      1      1        1    82.8        2
-## # ... with 15 more variables: hwbmi &lt;dbl&gt;, gsgrpavg &lt;dbl&gt;, nfwlkspd &lt;dbl&gt;,
+## # ... with 20 more variables: hwbmi &lt;dbl&gt;, gsgrpavg &lt;dbl&gt;, nfwlkspd &lt;dbl&gt;,
 ## #   b1fnd &lt;dbl&gt;, b1tbfkg &lt;dbl&gt;, b1tblkg &lt;dbl&gt;, mhfalln2 &lt;dbl&gt;, st_1 &lt;dbl&gt;,
-## #   st_2 &lt;dbl&gt;, st_3 &lt;dbl&gt;, st_4 &lt;dbl&gt;, st_5 &lt;dbl&gt;, falls &lt;dbl&gt;,
-## #   inv_sq_walk &lt;dbl&gt;, grip_trform &lt;dbl&gt;</code></pre>
+## #   st_2 &lt;dbl&gt;, st_3 &lt;dbl&gt;, st_4 &lt;dbl&gt;, st_5 &lt;dbl&gt;, falls &lt;dbl&gt;, qlh2 &lt;dbl&gt;,
+## #   qlh3 &lt;dbl&gt;, qlh4 &lt;dbl&gt;, qlh5 &lt;dbl&gt;, qlh &lt;dbl&gt;, inv_sq_walk &lt;dbl&gt;,
+## #   grip_trform &lt;dbl&gt;</code></pre>
 <pre class="r"><code>length(step4_narm[step4_narm$mharth == 1 &amp; step4_narm$mhpark == 1,]$id)</code></pre>
 <pre><code>## Warning: Unknown or uninitialised column: `id`.</code></pre>
 <pre><code>## [1] 0</code></pre>
 <pre class="r"><code>step4_narm[step4_narm$mharth == 1 &amp; step4_narm$mhpark == 1,]</code></pre>
-<pre><code>## # A tibble: 14 x 25
+<pre><code>## # A tibble: 14 x 30
 ##    site  giage1 mhdiab mhstrk mhpark mhcopd mharth mhcancer pascore qlhealth
 ##    &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
 ##  1 MN        82      0      1      1      0      1        0    75.7        2
@@ -5149,10 +5226,11 @@ df_EMM</code></pre>
 ## 12 SD        76      0      0      1      1      1        1    82.8        2
 ## 13 PI        72      0      0      1      0      1        0   128.         3
 ## 14 MN        70      0      0      1      0      1        1   181.         3
-## # ... with 15 more variables: hwbmi &lt;dbl&gt;, gsgrpavg &lt;dbl&gt;, nfwlkspd &lt;dbl&gt;,
+## # ... with 20 more variables: hwbmi &lt;dbl&gt;, gsgrpavg &lt;dbl&gt;, nfwlkspd &lt;dbl&gt;,
 ## #   b1fnd &lt;dbl&gt;, b1tbfkg &lt;dbl&gt;, b1tblkg &lt;dbl&gt;, mhfalln2 &lt;dbl&gt;, st_1 &lt;dbl&gt;,
-## #   st_2 &lt;dbl&gt;, st_3 &lt;dbl&gt;, st_4 &lt;dbl&gt;, st_5 &lt;dbl&gt;, falls &lt;dbl&gt;,
-## #   inv_sq_walk &lt;dbl&gt;, grip_trform &lt;dbl&gt;</code></pre>
+## #   st_2 &lt;dbl&gt;, st_3 &lt;dbl&gt;, st_4 &lt;dbl&gt;, st_5 &lt;dbl&gt;, falls &lt;dbl&gt;, qlh2 &lt;dbl&gt;,
+## #   qlh3 &lt;dbl&gt;, qlh4 &lt;dbl&gt;, qlh5 &lt;dbl&gt;, qlh &lt;dbl&gt;, inv_sq_walk &lt;dbl&gt;,
+## #   grip_trform &lt;dbl&gt;</code></pre>
 <p>There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson’s and a history of COPD and arthritis, respectively. Clearly, that is too few subjects for this interaction term to make sense. We can assess these interactions using the liklihood ratio test to compare them to the model produced by step 5:</p>
 </div>
 <div id="mhparkmhcopd" class="section level3">
@@ -5261,6 +5339,36 @@ as.data.frame(summary(preliminary_final_model)$coef)</code></pre>
 ##              TRUE              TRUE             FALSE              TRUE 
 ##           b1tblkg      mharth:b1fnd 
 ##              TRUE              TRUE</code></pre>
+<pre class="r"><code>mod.qlhealth &lt;- glm(formula = falls ~ factor(qlhealth),
+                    family = &quot;binomial&quot;,
+                    data = step3_narm1)
+summary(mod.qlhealth)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = falls ~ factor(qlhealth), family = &quot;binomial&quot;, 
+##     data = step3_narm1)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.1774  -0.5736  -0.5736  -0.4922   2.0837  
+## 
+## Coefficients:
+##                   Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)       -2.04974    0.07420 -27.624  &lt; 2e-16 ***
+## factor(qlhealth)2  0.32837    0.09166   3.582 0.000341 ***
+## factor(qlhealth)3  0.78997    0.12660   6.240 4.38e-10 ***
+## factor(qlhealth)4  1.29596    0.31212   4.152 3.29e-05 ***
+## factor(qlhealth)5  2.04974    0.63679   3.219 0.001287 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 4274.2  on 5091  degrees of freedom
+## Residual deviance: 4219.4  on 5087  degrees of freedom
+## AIC: 4229.4
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
 </div>
 </div>
 </div>
