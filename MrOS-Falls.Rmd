@@ -325,7 +325,7 @@ Drawing up the odds ratios and confidence intervals hasn't brought us to any sep
 
 **Note**: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude `b1fnd`. Nothing else would change.
 
-### gtsummary output for the paper
+### initial gtsummary output with ORs & p-values
 
 We can use the 'tbl_uvregression' function from the 'gtsummary' package to create a publishable table with the above information:
 
@@ -347,6 +347,19 @@ Considering that 'good' subjective overall health is essentially the same as 'ex
 MrOs$qlh <- ifelse(MrOs$qlhealth == 1 | MrOs$qlhealth == 2, 0, 1)
 ```
 
+### gtsummary output for paper with ORs & p-values
+
+We can use the 'tbl_uvregression' function from the 'gtsummary' package to create a table for the current set of variables (i.e. collapsed subjective health status, but not the ordinal subjective health status variable):
+
+```{r}
+MrOs %>% 
+  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5, qlh) %>% 
+  tbl_uvregression(
+    method = glm,
+    y = falls,
+    method.args = list(family = 'binomial'),
+  )
+```
 
 ## Step 2: First Multivariable Model
 
@@ -358,7 +371,6 @@ Throughout our handling of multivariate models, we'll use the following structur
 step2_narm <- MrOs %>% 
   dplyr::select(-b1tblkg,-b1thd,-mhfallv2) %>%
   drop_na()
-
 ```
 
 ### Creating the full model
@@ -479,12 +491,11 @@ kable(summary(reduced_model)$coef)
 
 lrtest(full_model, reduced_model) # don't exclude PACE score 
 
-
 ```
 
 Include PACE score.
 
-#### Adding back in PACE score
+### Adding back in PACE score
 
 ```{r}
 # exclude site, hx. diabetes, hx stroke, hx cancer, PACE score. 
@@ -539,6 +550,8 @@ reduced_model <-
 # bool if change in beta exceeds 20%
 abs((reduced_model$coef[2:13]-full_model$coef[2:13])/reduced_model$coefficients[2:13]) > 0.2
 ```
+
+### Step 3 model
 
 It appears that none of the variables excluded in step two are confounders in this model. We'll retain the reduced model from step two at this stage. 
 
@@ -818,6 +831,7 @@ frac_fatMass <- mfp(
 
 ```
 
+### Creating transformed variables
 
 ```{r, encode transformation}
 step4_narm <- step3_narm1 %>% 
@@ -826,6 +840,24 @@ step4_narm <- step3_narm1 %>%
     grip_trform = 
       (gsgrpavg/100)^-2 + ((gsgrpavg/100)^-2 * log(gsgrpavg/100)))
 
+```
+
+### Visualizing transformed variables
+
+```{r}
+plot(step4_narm$nfwlkspd, step4_narm$inv_sq_walk)
+plot(step4_narm$nfwlkspd, (step4_narm$nfwlkspd+1)^-2)
+```
+
+```{r}
+plot(step4_narm$gsgrpavg,step4_narm$grip_trform)
+```
+
+From the above plots, we can formulate an offseted transformation of inverse squared walking speed, which decreases the disproportionate values given to small absolute values of walking speed:
+
+```{r}
+step4_narm <- step4_narm %>% 
+  mutate(offsetinv_sq_walk = (nfwlkspd+1)^-2)
 ```
 
 ```{r, loess for transforms}
@@ -877,14 +909,23 @@ step5_model3 <- glm(
   family = "binomial",
   data = step4_narm)
 
+step5_model4 <- glm(
+  formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlh + hwbmi + gsgrpavg + offsetinv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg, 
+  family = "binomial",
+  data = step4_narm)
+
 summary(step5_model1)$coef
 summary(step5_model2)$coef
 summary(step5_model3)$coef
+summary(step5_model4)$coef
 
 summary(step4_model)$deviance
 summary(step5_model1)$deviance
 summary(step5_model2)$deviance
 summary(step5_model3)$deviance
+summary(step5_model4)$deviance
 ```
 
 ### Step 5 model
@@ -1518,7 +1559,15 @@ outlier <- diag[which(diag$h>0.05)]
 outlier
 ```
 
-Four influencial outliers are identified.  Consultation with a subject matter expert would allow us to make an informed decision on whether to include or exclude these subjects.  It appears that these four outliers represent the extreme values of the inverse square of the walking speed.  We can censor PO7440, PI5413, BI0650, & PA3753;  and repeat the analysis.  A separate .rmd file will be made for this.
+Four influencial outliers are identified.  Consultation with a subject matter expert would allow us to make an informed decision on whether to include or exclude these subjects.  However, we can note that these four outliers represent the extreme values of the inverse square of the walking speed.  We could consider censoring PO7440, PI5413, BI0650, & PA3753;  and repeat the analysis.  We will first consider creating a model with the walking speed offset by 1, so as to avoid creating extremely large values of the inverse square of the walking speed for extremely small values of walking speed.  'step5_model4' is such a model, and we can compare it using the diagnostics above:
+
+```{r}
+hoslem.test(step4_narm$falls, fitted(step5_model4), g=10)
+PseudoR2(step5_model4)
+AIC(step5_model4)
+BIC(step5_model4)
+```
+Although the AIC & BIC of this model are slightly better, the Hosmer-Lemeshow and pesudo-$R^2$ values are worse.  We can proceed by completing the proposed censoring of observations above:
 
 # References
 
