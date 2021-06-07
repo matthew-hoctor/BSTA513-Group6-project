@@ -43,6 +43,7 @@ library(ResourceSelection)
 #<<<<<<< HEAD
 library(multcomp)
 library(gridExtra)
+library(DescTools)
 
 #=======
 #library(multcomp)
@@ -1356,6 +1357,7 @@ There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's 
 
 ```{r}
 lrtest(EMM17,step5_model)
+summary(EMM17)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1364,6 +1366,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM20,step5_model)
+summary(EMM20)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1372,6 +1375,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM24,step5_model)
+summary(EMM24)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1380,6 +1384,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM25,step5_model)
+summary(EMM25)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1388,6 +1393,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM30,step5_model)
+summary(EMM30)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1396,6 +1402,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM39,step5_model)
+summary(EMM39)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1404,6 +1411,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM48,step5_model)
+summary(EMM48)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1412,6 +1420,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM61,step5_model)
+summary(EMM61)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1420,6 +1429,7 @@ This doesn't meet our criterion, $\alpha = 0.05$.
 
 ```{r}
 lrtest(EMM73,step5_model)
+summary(EMM73)$coefficients[15,4]
 ```
 
 This doesn't meet our criterion, $\alpha = 0.05$.
@@ -1453,29 +1463,70 @@ For the above model, there are several continuous variables; therefore $J\approx
 hoslem.test(step4_narm$falls, fitted(preliminary_final_model), g=10)
 ```
 
-The small p-value reported above suggests that the model does not fit well; however out sample size > 1000, and therefore the Hosmer-Lemeshow test is likely to reject the model even if the fit is adequate.
+The small p-value reported above suggests that the model does not fit well; however out sample size is quite large (> 1000), and therefore the Hosmer-Lemeshow test is likely to reject the model even if the fit is adequate.
 
 ## Assessing discriminative ability
 
 To assess the discriminative ability of the preliminary final model we can compute the AUROC:
 
 ```{r}
-gof(preliminary_final_model)$auc
+gof(x = preliminary_final_model, lpotROC = TRUE)$auc
 ```
 
+As reported above, AUROC of the preliminary final model is 66.3% (64.1%, 68.4%). The reported valyes being less than 70% is somewhat concerning, but the model may be adequate for some purposes.
 
 ## Logistic Regression diagnostics
 
+### R2
 
+We can compute the pseudo-$R^2$ statistic (the McFadden $R^2$ statistic from the DescTools package):
+
+```{r}
+PseudoR2(preliminary_final_model)
+```
+
+Considering that this $R^2$ statistic is often quite small compared to those reported in linear regression, the value reported above does not necessarily indicate adequate fit.  The model does not reach the threashold of 0.2, which has been described as a 'moderately strong model'.
+
+### AIC & BIC
+
+```{r}
+AIC(preliminary_final_model)
+BIC(preliminary_final_model)
+```
+
+These values can be used to compare to another candidate model using the same data.  If such a model existed, a difference of three or more in AIC would be meaningful.
 
 ### Graphical Assessment
 
+We can use the 'plpt' command from the LogisticDx package, including the change in chi-square residuals vs pi-hat, change in deviance vs pi-hat, change in beta vs pi-hat,change in chi-square residuals vs pi-hat:
+
+```{r}
+plot(preliminary_final_model, devNew = FALSE)
+```
+
+This suggests one main result:
+
+ * The consistent presence of four outliers and one rather severe outlier in several of the plots suggests that their removal may improve the model.
+
 ### Numerical Assessment
+
+The LogisticDx package provides the dx function for computing diagnostics of our logistic regression model.  We will use this to look for influencial outliers; however our influencial outliers have a change in Pearson chi-sq closer to 15:
+
+```{r}
+diag <- dx(preliminary_final_model)
+outlier <- diag[which(diag$h>0.05)]
+outlier
+```
+
+Four influencial outliers are identified.  Consultation with a subject matter expert would allow us to make an informed decision on whether to include or exclude these subjects.
 
 # References
 
-1. Sjoberg D. Gtsummary: Presentation-Ready Data Summary and Analytic Result Tables [R Package Gtsummary Version 1.4.1]. Comprehensive R Archive Network (CRAN); 2021. Accessed May 20, 2021. https://CRAN.R-project.org/package=gtsummary
+1. Hothorn T, Zeileis A, Farebrother  (pan.f) RW, Cummins  (pan.f) C, Millo G, Mitchell D. Lmtest: Testing Linear Regression Models.; 2020. Accessed April 30, 2021. https://CRAN.R-project.org/package=lmtest
+2. Hu B, Shao J, Palta M. PSEUDO-R2 IN LOGISTIC REGRESSION MODEL. :14.
+3. Signorell A. Tools for Descriptive Statistics [R Package DescTools Version 0.99.41]. Comprehensive R Archive Network (CRAN); 2021. Accessed June 6, 2021. https://CRAN.R-project.org/package=DescTools
+4. Sjoberg D. Gtsummary: Presentation-Ready Data Summary and Analytic Result Tables [R Package Gtsummary Version 1.4.1]. Comprehensive R Archive Network (CRAN); 2021. Accessed May 20, 2021. https://CRAN.R-project.org/package=gtsummary
+5. Solymos P, Keim J, Lele S. Resource Selection (Probability) Functions for Use-Availability Data [R Package ResourceSelection Version 0.3-5]. Comprehensive R Archive Network (CRAN); 2019. Accessed June 6, 2021. https://CRAN.R-project.org/package=ResourceSelection
 
-2. Solymos P, Keim J, Lele S. Resource Selection (Probability) Functions for Use-Availability Data [R Package ResourceSelection Version 0.3-5]. Comprehensive R Archive Network (CRAN); 2019. Accessed June 6, 2021. https://CRAN.R-project.org/package=ResourceSelection
 
 
