@@ -40,14 +40,10 @@ library(gtsummary)
 library(mfp)
 library(LogisticDx)
 library(ResourceSelection)
-#<<<<<<< HEAD
 library(multcomp)
 library(gridExtra)
 library(DescTools)
 
-#=======
-#library(multcomp)
-#>>>>>>> 82ce76d656392abc2e0fe83ee320d75fb605b007
 ```
 
 ```{r, user defined functions, include=FALSE}
@@ -75,7 +71,7 @@ regression_CI = function(pe, se, alpha) {
 
 ```{r import data}
 MrOs <- readxl::read_excel("MrOS_Baseline_Falls_Project.xlsx")
-MrOs <- MrOs[c(-PO7440, -PI5413, -BI0650, -PA3753)]
+MrOs <- MrOs[c(-PO7440, -PI5413, -BI0650, -PA3753)] # not how you censor individual observations.
 glimpse(MrOs)
 skimr::skim(MrOs)
 obj_classes <- c()
@@ -302,9 +298,9 @@ qlhealth_model <- glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5,
                   family = binomial())
 
 # slope coefficients 
-betas <- qlhealth_model$coef[2:6]
+betas <- qlhealth_model$coef[2:5]
 # standard errors 
-ses <- as.data.frame(summary(qlhealth_model)$coef)$`Std. Error`[2:6]
+ses <- as.data.frame(summary(qlhealth_model)$coef)$`Std. Error`[2:5]
 # confidence interval beta & CI 
 beta_upper_bounds <- betas + qnorm(1-0.05/2)*ses
 beta_lower_bounds <- betas - qnorm(1-0.05/2)*ses
@@ -346,6 +342,8 @@ Considering that 'good' subjective overall health is essentially the same as 'ex
 
 ```{r}
 MrOs$qlh <- ifelse(MrOs$qlhealth == 1 | MrOs$qlhealth == 2, 0, 1)
+head(data.frame(MrOs$qlh,
+           MrOs$qlhealth))
 ```
 
 
@@ -372,8 +370,9 @@ full_model <-
       family = "binomial",
       data = step2_narm)
 
-kable(summary(full_model)$coef)
-summary(full_model)$coef[,4] < 0.05 
+df_fullmod <- data.frame(summary(full_model)$coef)
+df_fullmod$test <- summary(full_model)$coef[,4] < 0.05 
+df_fullmod
 ```
 
 ### Creating the reduced model
@@ -419,7 +418,9 @@ Exclude site.
 ```{r}
 # exclude hx. diabetes,
 reduced_model <-  
-  glm(falls ~  giage1 + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+  glm(falls ~  giage1 + mhstrk + mhpark + mhcopd + mharth + mhcancer +
+        pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg +
+        st_1 + st_2 + st_3 + st_4 + st_5,
       family = "binomial",
       data = step2_narm)
 
@@ -436,7 +437,9 @@ Exclude hx dm2.
 ```{r}
 # exclude hx stroke
 reduced_model <-  
-  glm(falls ~  giage1 + mhdiab + mhpark + mhcopd + mharth + mhcancer + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+  glm(falls ~  giage1 + mhdiab + mhpark + mhcopd + mharth + mhcancer +
+        pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 +
+        st_2 + st_3 + st_4 + st_5,  
       family = "binomial",
       data = step2_narm)
 
@@ -453,7 +456,9 @@ Exclude stroke hx.
 ```{r}
 # exclude hx cancer
 reduced_model <-  
-  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + pascore +
+        qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 +
+        st_2 + st_3 + st_4 + st_5,  
       family = "binomial",
       data = step2_narm)
 
@@ -1458,7 +1463,7 @@ as.data.frame(summary(preliminary_final_model)$coef)
 
 ## The Hosmer-Lemeshow test
 
-For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
+For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the `ResourceSelection` package:
 
 ```{r}
 hoslem.test(step4_narm$falls, fitted(preliminary_final_model), g=10)
