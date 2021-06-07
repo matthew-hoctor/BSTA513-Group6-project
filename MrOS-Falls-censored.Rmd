@@ -1,0 +1,1533 @@
+---
+title: "Falls in MrOS"
+author:
+  
+  Marty Arrigotti^[OHSU-PSU School of Public Health]
+  
+  Tyler Bennett^[OHSU-PSU School of Public Health]
+  
+  Anna Booman^[OHSU-PSU School of Public Health]
+  
+  Colin Hawkinson^[OHSU-PSU School of Public Health]
+  
+  Matthew Hoctor^[OHSU-PSU School of Public Health]
+  
+date: "6/2/2021"
+output:
+  html_document:
+    number_sections: no
+    theme: lumen
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, libraries, include=FALSE}
+library(tidyverse)
+library(purrr)
+library(readxl)
+library(knitr)
+library(lmtest)
+library(dplyr)
+library(gtsummary)
+library(mfp)
+library(LogisticDx)
+library(ResourceSelection)
+#<<<<<<< HEAD
+library(multcomp)
+library(gridExtra)
+library(DescTools)
+
+#=======
+#library(multcomp)
+#>>>>>>> 82ce76d656392abc2e0fe83ee320d75fb605b007
+```
+
+```{r, user defined functions, include=FALSE}
+regression_CI = function(pe, se, alpha) {
+  # returns log odds from regression coefficients;
+  # just quick_CI with the necessary reordering of bounds
+  ub = pe + qnorm(1-alpha/2)*se
+  lb = pe - qnorm(1-alpha/2)*se
+  if (ub < lb){
+    return(data.frame(
+      "point_estimate" = pe,
+      "lower_bound" = ub,
+      "upper_bound" = lb))
+  }
+  return(data.frame(
+    "point_estimate" = pe,
+    "lower_bound" = lb,
+    "upper_bound" = ub))
+}
+```
+
+# Data Exploration
+
+## glimpse & skimr output:
+
+```{r import data}
+MrOs <- readxl::read_excel("MrOS_Baseline_Falls_Project.xlsx")
+MrOs <- MrOs[c(-PO7440, -PI5413, -BI0650, -PA3753)]
+glimpse(MrOs)
+skimr::skim(MrOs)
+obj_classes <- c()
+for(i in seq(1:length(MrOs))) {
+  obj_classes = c(obj_classes, class(MrOs[[1,i]]))
+}
+obj_classes
+
+```
+
+## Creation of site & qlhealth dummy variables and outcome variable
+
+We'll consider every variable in the data frame other than patient ID as a candidate variable for the model. We'll use Portland as the referent group for when site is considered as a categorical variable. The **outcome** of interest is having more than one fall in a given year. 
+
+
+```{r 1. variable }
+unique(MrOs$site)
+MrOs <- MrOs %>% 
+  mutate(st_1 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 1,
+    site == "MN" ~ 0,
+    site == "PA" ~ 0,
+    site == "PI" ~ 0,
+    site == "SD" ~ 0
+  )) %>% 
+  mutate(st_2 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 1,
+    site == "PA" ~ 0,
+    site == "PI" ~ 0,
+    site == "SD" ~ 0
+  )) %>%   
+  mutate(st_3 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 0,
+    site == "PA" ~ 1,
+    site == "PI" ~ 0,
+    site == "SD" ~ 0
+  )) %>% 
+  mutate(st_4 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 0,
+    site == "PA" ~ 0,
+    site == "PI" ~ 1,
+    site == "SD" ~ 0
+  ))%>% 
+  mutate(st_5 = case_when(
+    site == "PO" ~ 0,
+    site == "BI" ~ 0,
+    site == "MN" ~ 0,
+    site == "PA" ~ 0,
+    site == "PI" ~ 0,
+    site == "SD" ~ 1
+  )) %>% 
+  mutate(falls = case_when( # outcome coding
+    mhfalln2 > 1 ~ 1,
+    mhfalln2 <= 1 ~ 0
+  ))
+
+```
+
+Creating the qlhealth dummy variables; 'Excellent' subjective health rating is used as the referent category:
+
+```{r}
+MrOs$qlh2 <- ifelse(MrOs$qlhealth == 2,1,0)
+MrOs$qlh3 <- ifelse(MrOs$qlhealth == 3,1,0)
+MrOs$qlh4 <- ifelse(MrOs$qlhealth == 4,1,0)
+MrOs$qlh5 <- ifelse(MrOs$qlhealth == 5,1,0)
+```
+
+
+## Check Groups sizes for each unique value of each categorical variable
+
+```{r check group sizes}
+MrOs_group_check = MrOs %>%  # why did this break?
+    dplyr::select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, 
+    st_1, st_2, st_3, st_4, st_5,
+    qlh2, qlh3, qlh4, qlh5)
+
+counts_list <- map(.x = as.list(MrOs_group_check), .f = function(x) {
+  vector = unique(x)
+  q = c()
+  for (i in vector) {
+    v = x[x == i]
+    obs = length(v)
+    q = c(q, obs)
+  }
+  return(q)
+})
+counts_list
+
+```
+
+Note that when the length of the unique level is 5994 (the number of total rows in the dataset) it's due to the way R handles `NA` in boolean operations. The presence of this number in the above output is a signifier of missingness. 
+
+This also serves as a sanity check for the above dummy variable generation. We see that the correct number of observations exist in each dummy variable by comparing the lower count in the dummy variables to the counts in `site`. 
+
+There are only 52 subjects with a history of Parkinson's. That may be an issue later. 
+
+# Variable Seleciton 
+
+## Step 1: Univariate Analysis
+
+We employ a type 1 error rate of $\alpha = 0.20$ for univariate Wald Tests and construct 95% confidence intervals for each candidate variable's slope coefficient and one-unit odds ratio. 
+
+The null hypothesis for the Wald test, which is repeatedly used throughout this report, is that the beta coefficient in question $\hat \beta_i$ is equal to zero. The test statistic for the Wald test is $W = \frac{\hat \beta_1}{\widehat{SE} (\hat \beta_1)} \sim N(0,1)$. In output tables from `R`, the Wald statistic $W$ is represented by `z.value`. The criteria to reject is $P(|z| > W) < \alpha$, where alpha is the type one error rate specified for the particular test. Here, as has been already stated, we'll use a p-value of 0.20 as our cutoff for statistical significance, but other values for $\alpha$ will be specified throughout. 
+
+```{r}
+models = list(
+  glm(falls ~ st_1 + st_2 + 
+        st_3 + st_4 + st_5, data = MrOs, family = binomial()),
+  glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5
+      , data = MrOs, family = binomial()),
+  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
+  glm(falls ~ giage1, data = MrOs, family = binomial()),
+  glm(falls ~ mhdiab, data = MrOs, family = binomial()),
+  glm(falls ~ mhstrk, data = MrOs, family = binomial()),
+  glm(falls ~ mhcopd, data = MrOs, family = binomial()),
+  glm(falls ~ mhpark, data = MrOs, family = binomial()),
+  glm(falls ~ mharth, data = MrOs, family = binomial()),
+  glm(falls ~ mhcancer, data = MrOs, family = binomial()),
+  glm(falls ~ pascore, data = MrOs, family = binomial()),
+  glm(falls ~ qlhealth, data = MrOs, family = binomial()),
+  glm(falls ~ hwbmi, data = MrOs, family = binomial()),
+  glm(falls ~ b1tbfkg, data = MrOs, family = binomial()),
+  glm(falls ~ b1tblkg, data = MrOs, family = binomial()),
+  glm(falls ~ gsgrpavg, data = MrOs, family = binomial()),
+  glm(falls ~ nfwlkspd, data = MrOs, family = binomial()),
+  glm(falls ~ b1fnd, data = MrOs, family = binomial()),
+  glm(falls ~ b1thd, data = MrOs, family = binomial()))
+
+# kable looks better in pdf
+# map(.x = 
+#       map(.x = 
+#             models,
+#           .f =
+#             function(x)
+#               {data.frame(summary(x)$coefficients)}),
+#     .f =
+#       function(x) {kable(x)})
+
+map(.x = 
+            models,
+          .f =
+            function(x)
+              {data.frame(summary(x)$coefficients)})
+
+```
+
+Slope coefficients pass our univariate Wald test ($p < 0.2 = \alpha$) for study site, subjective health assessment, age at enrollment, history of diabetes, history of stroke, history of COPD, history of Parkinson's, history of arthritis, history of cancer, PASE score, body mass index (BMI), total body fat mass, average grip strength, walk speed, corrected femoral neck bone minderal density (BMD). The only variables excluded here are total body lean mass and corrected total hip BMD. 
+
+### Computing Wald p-value for each selected variable
+
+```{r beta CI, OR CI, and Wald p-value for each model}
+models = list(
+  glm(falls ~ giage1, data = MrOs, family = binomial()),
+  glm(falls ~ mhdiab, data = MrOs, family = binomial()),
+  glm(falls ~ mhstrk, data = MrOs, family = binomial()),
+  glm(falls ~ mhcopd, data = MrOs, family = binomial()),
+  glm(falls ~ mhpark, data = MrOs, family = binomial()),
+  glm(falls ~ mharth, data = MrOs, family = binomial()),
+  glm(falls ~ mhcancer, data = MrOs, family = binomial()),
+  glm(falls ~ pascore, data = MrOs, family = binomial()),
+  glm(falls ~ hwbmi, data = MrOs, family = binomial()),
+  glm(falls ~ b1tbfkg, data = MrOs, family = binomial()),
+  glm(falls ~ gsgrpavg, data = MrOs, family = binomial()),
+  glm(falls ~ nfwlkspd, data = MrOs, family = binomial()),
+  glm(falls ~ b1fnd, data = MrOs, family = binomial()))
+
+map(.x = models, .f = function(x) {
+  coeffs = summary(x)$coefficients # table coefficients...
+  p  = coeffs[2,4] # beta_1 p-val...
+  b  = coeffs[,1][2] # beta_1...
+  se = coeffs[2,2] # beta_1 se...
+  beta_CI = regression_CI(pe = b, se = se, alpha = 0.05)
+  OR_CI   = exp(beta_CI)
+  table   = rbind(beta_CI, OR_CI)
+  table$p = c(p, NA)
+  rownames(table) = c(rownames(table)[1], "OR")
+  return((table)) # put kable() back
+})
+
+```
+
+> For each of the above tables, the beta coefficient CI is labeled with the name of the variable being assessed in the table. The odds ratio is on the second row. The p-value for the Wald test is in the first entry of the last column *Note*: NA simply signifies the cell as empty. 
+
+Since site & health quality are multilevel and categorical, they are computed separately. 
+
+```{r}
+site_model <- glm(falls ~ st_1 + st_2 + 
+        st_3 + st_4 + st_5, data = MrOs, family = binomial())
+
+# slope coefficients 
+betas <- site_model$coef[2:6]
+# standard errors 
+ses <- as.data.frame(summary(site_model)$coef)$`Std. Error`[2:6]
+# confidence interval beta & CI 
+beta_upper_bounds <- betas + qnorm(1-0.05/2)*ses
+beta_lower_bounds <- betas - qnorm(1-0.05/2)*ses
+OR_upper_bounds <- exp(betas + qnorm(1-0.05/2)*ses)
+OR_lower_bounds <- exp(betas - qnorm(1-0.05/2)*ses)
+OR <- exp(betas)
+# formatting 
+tbl <- rbind(betas, 
+      beta_upper_bounds,
+      beta_lower_bounds, 
+      OR,
+      OR_upper_bounds, 
+      OR_lower_bounds)
+# output 
+as.data.frame(t(tbl))
+
+```
+
+Subjective health status:
+
+```{r}
+qlhealth_model <- glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5,
+                  data = MrOs,
+                  family = binomial())
+
+# slope coefficients 
+betas <- qlhealth_model$coef[2:6]
+# standard errors 
+ses <- as.data.frame(summary(qlhealth_model)$coef)$`Std. Error`[2:6]
+# confidence interval beta & CI 
+beta_upper_bounds <- betas + qnorm(1-0.05/2)*ses
+beta_lower_bounds <- betas - qnorm(1-0.05/2)*ses
+OR_upper_bounds <- exp(betas + qnorm(1-0.05/2)*ses)
+OR_lower_bounds <- exp(betas - qnorm(1-0.05/2)*ses)
+OR <- exp(betas)
+# formatting 
+tbl <- rbind(betas, 
+      beta_upper_bounds,
+      beta_lower_bounds, 
+      OR,
+      OR_upper_bounds, 
+      OR_lower_bounds)
+# output 
+as.data.frame(t(tbl))
+```
+
+Drawing up the odds ratios and confidence intervals hasn't brought us to any separate conclusion than the univariate Wald tests did as to which variables are retained at the end of this step. 
+
+**Note**: if we use an alternative alpha of 0.05 for our univariate Wald tests, we would exclude `b1fnd`. Nothing else would change.
+
+### gtsummary output for the paper
+
+We can use the 'tbl_uvregression' function from the 'gtsummary' package to create a publishable table with the above information:
+
+```{r}
+MrOs %>% 
+  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5, qlh2, qlh3, qlh4, qlh5) %>% 
+  tbl_uvregression(
+    method = glm,
+    y = falls,
+    method.args = list(family = 'binomial'),
+  )
+```
+
+### Collapsing 'qlhealth'
+
+Considering that 'good' subjective overall health is essentially the same as 'excellent' overall health (p=0.8), we can collapse the subjective overall health status variables into a single binary variable with value 0 for 'excellent'-'good health' ('qlhealth' = 1-2), and value 1 for 'fair' to 'very poor' health ('qlhealth' = 3-5):
+
+```{r}
+MrOs$qlh <- ifelse(MrOs$qlhealth == 1 | MrOs$qlhealth == 2, 0, 1)
+```
+
+
+## Step 2: First Multivariable Model
+
+### Creating a dataset with NA observations removed
+
+Throughout our handling of multivariate models, we'll use the following structure to subset the data to only the variables we're considering *before* censoring observations with incomplete fields. 
+
+```{r}
+step2_narm <- MrOs %>% 
+  dplyr::select(-b1tblkg,-b1thd,-mhfallv2) %>%
+  drop_na()
+
+```
+
+### Creating the full model
+
+We'll add all the variables identified as important in step one to form our *full model*. Then we'll form a *reduced model* with every variable associated with a Wald test p-value less than 0.05 and compare the full and reduced model with the likelihood ratio test. The null hypothesis for the likelihood ratio test is $H_0: \beta_{inf} = 0$, $H_1: \beta_{inf} \neq 0$, where the criteria to reject is a p-value less than 0.05.
+
+```{r}
+full_model <- 
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,
+      family = "binomial",
+      data = step2_narm)
+
+kable(summary(full_model)$coef)
+summary(full_model)$coef[,4] < 0.05 
+```
+
+### Creating the reduced model
+
+Based on the above output we will exclude site, hx. diabetes, hx stroke, hx cancer, PACE score from the reduced model, and perform the liklihood ratio test between the full and reduced models.  We will utilize the 'lrtest' function from the 'lmtest' package to perform this computation:
+
+```{r}
+reduced_model <-  
+  glm(falls ~  giage1 + mhpark +
+        mhcopd + mharth + qlh + 
+        hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,
+      family = "binomial",
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # can't throw them all away 
+```
+
+The reduced model does *not* provide a better fit than the full model. Therefore, we'll use the same full model, but reduce the model by only one variable before taking the likelihood ratio. 
+
+### Removing one variable at a time:
+
+#### site
+
+```{r}
+# exclude site, 
+reduced_model <-  
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,  
+      family = "binomial",
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # exclude site 
+
+```
+
+Exclude site.
+
+#### DM2
+
+```{r}
+# exclude hx. diabetes,
+reduced_model <-  
+  glm(falls ~  giage1 + mhstrk + mhpark + mhcopd + mharth + mhcancer + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      family = "binomial",
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # exclude hx. diabetes 
+
+```
+
+Exclude hx dm2.
+
+#### Stroke
+
+```{r}
+# exclude hx stroke
+reduced_model <-  
+  glm(falls ~  giage1 + mhdiab + mhpark + mhcopd + mharth + mhcancer + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      family = "binomial",
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # exclude hx stroke 
+
+```
+
+Exclude stroke hx.
+
+#### Cancer
+
+```{r}
+# exclude hx cancer
+reduced_model <-  
+  glm(falls ~  giage1 + mhdiab + mhstrk + mhpark + mhcopd + mharth + pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + st_1 + st_2 + st_3 + st_4 + st_5,  
+      family = "binomial",
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # exclude hx cancer 
+
+```
+
+Exclude cancer hx.
+
+#### PACE score
+
+```{r}
+# exclude PACE score. 
+reduced_model <-  
+  glm(falls ~  giage1 + mhpark +
+        mhcopd + mharth + qlh + 
+        hwbmi + gsgrpavg + nfwlkspd + b1fnd + b1tbfkg,
+      family = "binomial",
+      data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) # don't exclude PACE score 
+
+
+```
+
+Include PACE score.
+
+#### Adding back in PACE score
+
+```{r}
+# exclude site, hx. diabetes, hx stroke, hx cancer, PACE score. 
+full_model$call
+
+# step2_narm$
+reduced_model <-  
+   glm(formula = falls ~ giage1 + mhpark + mhcopd + 
+    mharth + pascore + qlh + hwbmi + gsgrpavg + 
+    nfwlkspd + b1fnd + b1tbfkg,
+      family = "binomial",
+    data = step2_narm)
+
+kable(summary(reduced_model)$coef)
+
+lrtest(full_model, reduced_model) 
+
+```
+
+We've added back PACE score to achieve the most parsimonious model for which the full model does not provide significant advantage in performance by the likelihood ratio test.
+
+## Step 3: Check Removed Covariate(s) Using the Change in $\beta_i$ Method
+
+We'll solve for a percent change in beta coefficients not including the intercept common in the full and reduced using a simple formula: 
+
+$$
+\Delta = \left(\frac{final-initial}{final}\right )\times 100\%
+$$
+
+And we'll say that a $\Delta > 20\%$  is significant. If an individual coefficient is altered by more than 20%, at least one of the excluded coefficients may be an important confounder of the association between the outcome and a variable whose slope coefficient was altered. 
+
+```{r}
+# reorder $call... 
+full_model <- 
+  glm(formula = falls ~ # make sure the $call is ordered correctly 
+        giage1  + mhpark + mhcopd + mharth + qlh + hwbmi + 
+        gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + mhstrk + pascore + 
+        mhdiab + mhcancer + st_1 + st_2 + st_3 + st_4 + st_5, 
+    family = "binomial",
+    data = step2_narm)
+
+reduced_model <- 
+  glm(formula = falls ~ # make sure the $call is ordered correctly 
+        giage1  + mhpark + mhcopd + mharth + qlh + hwbmi + 
+        gsgrpavg + nfwlkspd + b1fnd + b1tbfkg + mhstrk + pascore, 
+    family = "binomial",
+    data = step2_narm)
+
+# the change in beta 
+(reduced_model$coef[2:13]-full_model$coef[2:13])/reduced_model$coefficients[2:13]
+
+# bool if change in beta exceeds 20%
+abs((reduced_model$coef[2:13]-full_model$coef[2:13])/reduced_model$coefficients[2:13]) > 0.2
+```
+
+It appears that none of the variables excluded in step two are confounders in this model. We'll retain the reduced model from step two at this stage. 
+
+```{r}
+step3_model <- reduced_model
+summary(step3_model)$coef[,4] < 0.05
+kable(summary(step3_model)$coef)
+```
+
+## Step 4: Checking Removed Covariates & Regrouping of Cagetorical Covariates
+
+We'll add back the subjects' lean body mass and cancer status to determine if their joint significance by the Wald test is sufficient to include them in the model. We'll again use $\alpha = 0.05$ for the type one error rate of our Wald Test. We'll add the variables individually, then together. 
+
+### 'b1tblkg', lean body mass
+
+```{r}
+step3_narm1 <- MrOs %>% 
+  dplyr::select(-b1thd,-mhfallv2) %>%
+  drop_na()
+
+# add back b1tblkg 
+check_again_lean <- glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1tblkg, 
+    family = "binomial",
+    data = step3_narm1)
+
+summary(check_again_lean)$coef
+summary(check_again_lean)$coef[14,4] < 0.05 # lean body mass now significant 
+```
+
+lean body mass now significant 
+
+### 'b1thd', corrected hip bone mineral
+
+```{r}
+step3_narm2 <- MrOs %>% 
+  dplyr::select(-b1tblkg,-mhfallv2) %>%
+  drop_na()
+
+# add back b1tblkg 
+check_again_hipBMD <- glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1thd, 
+    family = "binomial",
+    data = step3_narm2)
+
+summary(check_again_hipBMD)$coef
+summary(check_again_hipBMD)$coef[14,4] < 0.05 # corrected hip bone mineral now significant 
+
+```
+
+Corrected hip bone mineral not significant.
+
+### 'b1thd + b1tblkg', total lean body mass & hip BMD
+
+```{r}
+step3_narm3 <- MrOs %>% 
+  dplyr::select(-mhfallv2) %>%
+  drop_na()
+
+# add back b1tblkg 
+check_again_both <- glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+    b1tbfkg + b1thd + b1tblkg,  
+    family = "binomial",
+    data = step3_narm3)
+
+summary(check_again_both)$coef
+summary(check_again_both)$coef[14,4] < 0.05 # corrected hip bone mineral density not significant even when lean body mass considered 
+
+```
+
+Only total LBM, 'b1tblkg', is significant, even when both are considered.
+
+### step 4 model
+
+We'll add lean body mass to the model from the last step to end step four. Addition of these variables does *not* make the variables added back at the previous stage pass a univaraite Wald test where $\alpha = 0.05$, but that's inconsequential. 
+
+```{r}
+step4_model <- check_again_lean
+df_1 <- as.data.frame(summary(step4_model)$coef)
+df_1$pass <- df_1[,4] < 0.05
+df_1
+```
+
+## Step 5: Check Linearity Assumption for Concinuous Variables 
+
+### Identifying continuous variables
+
+```{r}
+glimpse(step3_narm1)
+```
+
+### Graphical approach
+
+We'll employ the loess approach to screen for linearity in the log odds across the range of each continuous independent variable. For variables that are obviously nonlinear by loess, we'll use the fractional polynomial approach to identify the best transformation. 
+
+```{r, loess checks}
+# loess subject age 
+step3_narm1 = step3_narm1 %>% # # 
+  arrange(desc(giage1)) %>% 
+  map_df(rev)
+gg1 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = giage1, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = giage1, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+# loess PACE score 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(pascore)) %>% 
+  map_df(rev)
+gg2 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = pascore, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = pascore, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+# loess BMI 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(hwbmi)) %>% 
+  map_df(rev)
+gg3 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = hwbmi, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = hwbmi, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+# loess grip strength 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(gsgrpavg)) %>% 
+  map_df(rev)
+gg4 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = gsgrpavg, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = gsgrpavg, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+# loess walk speed 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(nfwlkspd)) %>% 
+  map_df(rev)
+gg5 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = nfwlkspd, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = nfwlkspd, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+# loess corrected neck BMD 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(b1fnd)) %>% 
+  map_df(rev)
+gg6 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = b1fnd, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = b1fnd, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+# loess body fat mass 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(b1tbfkg)) %>% 
+  map_df(rev)
+gg7 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = b1tbfkg, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = b1tbfkg, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+# loess body lean mass 
+step3_narm1 = step3_narm1 %>% 
+  arrange(desc(b1tblkg)) %>% 
+  map_df(rev)
+gg8 <- 
+  ggplot(data = step3_narm1) +
+  stat_smooth(mapping = aes(x = b1tblkg, y = falls), method = "loess") + 
+  stat_smooth(mapping = aes(x = b1tblkg, y = falls), method = "lm", color = "red") + 
+  theme_minimal()
+
+grid.arrange(gg1, 
+             gg2,
+             gg3,
+             gg4,
+             gg5,
+             gg6,
+             gg7,
+             gg8)
+
+```
+
+### Checking fractional polynomials
+
+We'll check the fractional polynomials for walk speed, corrected femoral neck bone mineral density, average left/right grip strength, BMI, and subject age. 
+
+```{r, fractional polynomial screening}
+step4_model$call
+
+fracpoly_age <- mfp(
+  falls ~ fp(giage1, df = 4) +
+    mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # use ident for age
+)
+
+# frac_PACEscore <- mfp(
+#   falls ~ fp(pascore, df = 4) +
+#     giage1 + mhstrk + mhpark + mhcopd + mharth +
+#     qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd +
+#     b1tbfkg + b1tblkg, data = step3_narm1,
+#   family = binomial(),
+#   alpha = 0.1,
+#   verbose = T # use ident for PACE score
+# )
+
+frac_BMI <- mfp(
+  falls ~ fp(hwbmi, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlh + gsgrpavg + nfwlkspd + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # use ident for hwbmi
+)
+
+frac_grip <- mfp(
+  falls ~ fp(gsgrpavg, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlh + hwbmi + nfwlkspd + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # I((gsgrpavg/100)^-2)+I((gsgrpavg/100)^-2*log((gsgrpavg/100)))
+)
+
+frac_walkspeed <- mfp(
+  falls ~ fp(nfwlkspd, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlh + hwbmi + gsgrpavg + b1fnd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # inverse square for nfwlkspd
+)
+
+frac_neckBMD <- mfp(
+  falls ~ fp(b1fnd, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlh + hwbmi + gsgrpavg + nfwlkspd +
+    b1tbfkg + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # idnet for b1fnd
+)
+
+frac_fatMass <- mfp(
+  falls ~ fp(b1tbfkg, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlh + hwbmi + gsgrpavg + nfwlkspd +
+    b1fnd + b1tblkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # idnet for b1tbfkg
+)
+
+frac_fatMass <- mfp(
+  falls ~ fp(b1tblkg, df = 4) +
+    giage1 + mhstrk + pascore + mhpark + mhcopd + mharth +
+    qlh + hwbmi + gsgrpavg + nfwlkspd +
+    b1fnd + b1tbfkg, data = step3_narm1,
+  family = binomial(),
+  alpha = 0.1,
+  verbose = T # idnet for b1tblkg
+)
+
+```
+
+
+```{r, encode transformation}
+step4_narm <- step3_narm1 %>% 
+  mutate(inv_sq_walk = nfwlkspd^-2) %>% 
+  mutate(
+    grip_trform = 
+      (gsgrpavg/100)^-2 + ((gsgrpavg/100)^-2 * log(gsgrpavg/100)))
+
+```
+
+```{r, loess for transforms}
+step4_narm = step4_narm %>%
+  arrange(desc(inv_sq_walk)) %>%
+  map_df(rev)
+gg9 <-
+  ggplot(data = step4_narm) +
+  stat_smooth(mapping = aes(x = inv_sq_walk, y = falls), method = "loess") +
+  stat_smooth(mapping = aes(x = inv_sq_walk, y = falls), method = "lm", color = "red") +
+  theme_minimal()
+
+
+step4_narm = step4_narm %>%
+  arrange(desc(grip_trform)) %>%
+  map_df(rev)
+gg10 <-
+  ggplot(data = step4_narm) +
+  stat_smooth(mapping = aes(x = grip_trform, y = falls), method = "loess") +
+  stat_smooth(mapping = aes(x = grip_trform, y = falls), method = "lm", color = "red") +
+  theme_minimal()
+
+grid.arrange(gg9, gg5, gg10, gg4)
+
+```
+
+```{r}
+step4_model$call
+summary(step4_model)$coef # without transformations
+
+step5_model1 <- glm(
+  formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg, 
+  family = "binomial",
+  data = step4_narm)
+
+step5_model2 <- glm(
+  formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlh + hwbmi + grip_trform + inv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg, 
+  family = "binomial",
+  data = step4_narm)
+
+step5_model3 <- glm(
+  formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd +
+    b1tbfkg + b1tblkg, 
+  family = "binomial",
+  data = step4_narm)
+
+summary(step5_model1)$coef
+summary(step5_model2)$coef
+summary(step5_model3)$coef
+
+summary(step4_model)$deviance
+summary(step5_model1)$deviance
+summary(step5_model2)$deviance
+summary(step5_model3)$deviance
+```
+
+### Step 5 model
+
+Note from the above output that the second model, including the inverse square walking speed parameter but not grip strength transform, has the least deviance, therefore that will be the model chosen for this step.
+
+The transforms identified by the fractional polynomial track seem to produce less linear log odds with respect to the outcome. We'll proceed with two preliminary final models: one containing the transforms of average grip strength and walk speed, and one containing the original encoding. Even though the inverse square of walk speed has a more statistically significant Wald statistic, we can see from the above plot that the linear fit for the log odds is estimated above one for a significant portion of the range. At any rate, there isn't a significant change in deviance between the model generated in step 4 and the models containing the transformations. 
+
+
+```{r}
+step5_model <- step5_model1
+summary(step5_model)$coef
+```
+
+## Step 6: Exploring Interactions
+
+### Creating the interaction models
+
+Since there are thirteen variables in the model, there are ${13} \choose 2 $ $= 78$ total interaction models to screen.  
+
+```{r, interaction screening aka wall of shame}
+EMM1 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhstrk,    family = "binomial",   data = step4_narm)
+EMM2 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhpark,    family = "binomial",   data = step4_narm)
+EMM3 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhcopd,    family = "binomial",   data = step4_narm)
+EMM4 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mharth,    family = "binomial",   data = step4_narm)
+EMM5 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*pascore,    family = "binomial",   data = step4_narm)
+EMM6 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*qlh,    family = "binomial",   data = step4_narm)
+EMM7 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*hwbmi,    family = "binomial",   data = step4_narm)
+EMM8 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM9 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM10 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1fnd,    family = "binomial",   data = step4_narm)
+EMM11 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM12 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM13 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mhpark,    family = "binomial",   data = step4_narm)
+EMM14 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mhcopd,    family = "binomial",   data = step4_narm)
+EMM15 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mharth,    family = "binomial",   data = step4_narm)
+EMM16 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*pascore,    family = "binomial",   data = step4_narm)
+EMM17 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*qlh,    family = "binomial",   data = step4_narm)
+EMM18 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*hwbmi,    family = "binomial",   data = step4_narm)
+EMM19 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM20 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM21 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1fnd,    family = "binomial",   data = step4_narm)
+EMM22 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM23 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM24 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*mhcopd,    family = "binomial",   data = step4_narm)
+EMM25 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*mharth,    family = "binomial",   data = step4_narm)
+EMM26 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*pascore,    family = "binomial",   data = step4_narm)
+EMM27 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*qlh,    family = "binomial",   data = step4_narm)
+EMM28 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*hwbmi,    family = "binomial",   data = step4_narm)
+EMM29 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM30 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM31 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1fnd,    family = "binomial",   data = step4_narm)
+EMM32 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM33 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM34 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*mharth,    family = "binomial",   data = step4_narm)
+EMM35 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*pascore,    family = "binomial",   data = step4_narm)
+EMM36 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*qlh,    family = "binomial",   data = step4_narm)
+EMM37 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*hwbmi,    family = "binomial",   data = step4_narm)
+EMM38 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM39 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM40 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1fnd,    family = "binomial",   data = step4_narm)
+EMM41 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM42 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM43 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*pascore,    family = "binomial",   data = step4_narm)
+EMM44 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*qlh,    family = "binomial",   data = step4_narm)
+EMM45 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*hwbmi,    family = "binomial",   data = step4_narm)
+EMM46 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM47 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM48 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1fnd,    family = "binomial",   data = step4_narm)
+EMM49 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM50 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM51 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*qlh,    family = "binomial",   data = step4_narm)
+EMM52 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*hwbmi,    family = "binomial",   data = step4_narm)
+EMM53 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM54 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM55 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1fnd,    family = "binomial",   data = step4_narm)
+EMM56 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM57 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM58 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlh*hwbmi,    family = "binomial",   data = step4_narm)
+EMM59 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlh*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM60 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlh*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM61 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlh*b1fnd,    family = "binomial",   data = step4_narm)
+EMM62 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlh*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM63 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlh*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM64 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*gsgrpavg,    family = "binomial",   data = step4_narm)
+EMM65 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM66 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1fnd,    family = "binomial",   data = step4_narm)
+EMM67 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM68 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM69 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*inv_sq_walk,    family = "binomial",   data = step4_narm)
+EMM70 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1fnd,    family = "binomial",   data = step4_narm)
+EMM71 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM72 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM73 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + inv_sq_walk*b1fnd,    family = "binomial",   data = step4_narm)
+EMM75 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + inv_sq_walk*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM76 <-
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg + inv_sq_walk*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM77 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + b1fnd*b1tbfkg,    family = "binomial",   data = step4_narm)
+EMM74 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + b1fnd*b1tblkg,    family = "binomial",   data = step4_narm)
+EMM78 <- 
+  glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + b1tbfkg*b1tblkg,    family = "binomial",   data = step4_narm)
+
+EMM_list <- list(
+  EMM1,
+  EMM2,
+  EMM3,
+  EMM4,
+  EMM5,
+  EMM6,
+  EMM7,
+  EMM8,
+  EMM9,
+  EMM10,
+  EMM11,
+  EMM12,
+  EMM13,
+  EMM14,
+  EMM15,
+  EMM16,
+  EMM17,
+  EMM18,
+  EMM19,
+  EMM20,
+  EMM21,
+  EMM22,
+  EMM23,
+  EMM24,
+  EMM25,
+  EMM26,
+  EMM27,
+  EMM28,
+  EMM29,
+  EMM30,
+  EMM31,
+  EMM32,
+  EMM33,
+  EMM34,
+  EMM35,
+  EMM36,
+  EMM37,
+  EMM38,
+  EMM39,
+  EMM40,
+  EMM41,
+  EMM42,
+  EMM43,
+  EMM44,
+  EMM45,
+  EMM46,
+  EMM47,
+  EMM48,
+  EMM49,
+  EMM50,
+  EMM51,
+  EMM52,
+  EMM53,
+  EMM54,
+  EMM55,
+  EMM56,
+  EMM57,
+  EMM58,
+  EMM59,
+  EMM60,
+  EMM61,
+  EMM62,
+  EMM63,
+  EMM64,
+  EMM65,
+  EMM66,
+  EMM67,
+  EMM68,
+  EMM69,
+  EMM70,
+  EMM71,
+  EMM72,
+  EMM73,
+  EMM74,
+  EMM75,
+  EMM76,
+  EMM77,
+  EMM78) # 400 lines of nonsense 
+
+```
+
+### Finding statistically significant EMM
+
+```{r}
+which(unlist(map(.x = EMM_list, 
+    .f = function(x){
+      summary(x)$coef[15,1] > 0.1
+    })))
+
+v_pval <- unlist(map(.x = EMM_list, 
+    .f = function(x){
+      summary(x)$coef[15,1]
+    }))
+
+v_test <- unlist(map(.x = EMM_list, 
+    .f = function(x){
+      summary(x)$coef[15,1] > 0.1
+    }))
+
+v_terms <- unlist(map(.x = EMM_list,
+    .f = function(x){
+      rownames(summary(x)$coef)[15]
+    }))
+
+df_EMM <- data.frame(
+  v_pval,
+  v_test
+)
+rownames(df_EMM) <- v_terms
+df_EMM
+
+length(rownames(df_EMM))
+length(unique(rownames(df_EMM)))
+
+```
+
+Several models show statistically significant interaction: 20, 24,25,30,39,48,61,73.
+
+The three statistically significant interaction terms: `mhpark:mhcopd`, `mhpark:mharth`, and `mharth:b1fnd`.
+
+### Examining number of subject in each interacting group
+
+```{r, rule out interaction terms with mhpark}
+length(step4_narm[step4_narm$mhcopd == 1 & step4_narm$mhpark == 1,]$id)
+step4_narm[step4_narm$mhcopd == 1 & step4_narm$mhpark == 1,]
+
+length(step4_narm[step4_narm$mharth == 1 & step4_narm$mhpark == 1,]$id)
+step4_narm[step4_narm$mharth == 1 & step4_narm$mhpark == 1,]
+
+```
+
+There are 4 and 14 subjects (in our reduced dataset) that have both Parkinson's and a history of COPD and arthritis, respectively. Clearly, that is too few subjects for this interaction term to make sense. We can assess these interactions using the liklihood ratio test to compare them to the model produced by step 5:
+
+### EMM17
+
+```{r}
+lrtest(EMM17,step5_model)
+summary(EMM17)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### EMM20
+
+```{r}
+lrtest(EMM20,step5_model)
+summary(EMM20)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### `mhpark:mhcopd`
+
+```{r}
+lrtest(EMM24,step5_model)
+summary(EMM24)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### `mhpark:mharth`
+
+```{r}
+lrtest(EMM25,step5_model)
+summary(EMM25)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### EMM30
+
+```{r}
+lrtest(EMM30,step5_model)
+summary(EMM30)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### EMM39
+
+```{r}
+lrtest(EMM39,step5_model)
+summary(EMM39)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### `mharth:b1fnd`
+
+```{r}
+lrtest(EMM48,step5_model)
+summary(EMM48)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### EMM61
+
+```{r}
+lrtest(EMM61,step5_model)
+summary(EMM61)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### EMM73
+
+```{r}
+lrtest(EMM73,step5_model)
+summary(EMM73)$coefficients[15,4]
+```
+
+This doesn't meet our criterion, $\alpha = 0.05$.
+
+### step 6: preliminary final model
+
+None of our EMM models passed the liklihood ratio test; therefore the preliminary final model is the one identified from step 5:
+
+```{r}
+preliminary_final_model <- step5_model
+  # glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
+  #     pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+  #     b1tbfkg + b1tblkg + mharth:b1fnd, 
+  #     family = "binomial",
+  #     data = step4_narm)
+as.data.frame(summary(preliminary_final_model)$coef)
+
+# pass Wald test for alpha = 0.05  
+(summary(preliminary_final_model)$coef[,4]) < 0.05
+# pass Wald test for alpha = 0.10   
+(summary(preliminary_final_model)$coef[,4]) < 0.1
+```
+
+# Checking the Fit of the Preliminary Final Model
+
+## The Hosmer-Lemeshow test
+
+For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
+
+```{r}
+hoslem.test(step4_narm$falls, fitted(preliminary_final_model), g=10)
+```
+
+The small p-value reported above suggests that the model does not fit well; however out sample size is quite large (> 1000), and therefore the Hosmer-Lemeshow test is likely to reject the model even if the fit is adequate.
+
+## Assessing discriminative ability
+
+To assess the discriminative ability of the preliminary final model we can compute the AUROC:
+
+```{r}
+gof(x = preliminary_final_model, lpotROC = TRUE)$auc
+```
+
+As reported above, AUROC of the preliminary final model is 66.3% (64.1%, 68.4%). The reported valyes being less than 70% is somewhat concerning, but the model may be adequate for some purposes.
+
+## Logistic Regression diagnostics
+
+### R2
+
+We can compute the pseudo-$R^2$ statistic (the McFadden $R^2$ statistic from the DescTools package):
+
+```{r}
+PseudoR2(preliminary_final_model)
+```
+
+Considering that this $R^2$ statistic is often quite small compared to those reported in linear regression, the value reported above does not necessarily indicate adequate fit.  The model does not reach the threashold of 0.2, which has been described as a 'moderately strong model'.
+
+### AIC & BIC
+
+```{r}
+AIC(preliminary_final_model)
+BIC(preliminary_final_model)
+```
+
+These values can be used to compare to another candidate model using the same data.  If such a model existed, a difference of three or more in AIC would be meaningful.
+
+### Graphical Assessment
+
+We can use the 'plpt' command from the LogisticDx package, including the change in chi-square residuals vs pi-hat, change in deviance vs pi-hat, change in beta vs pi-hat,change in chi-square residuals vs pi-hat:
+
+```{r}
+plot(preliminary_final_model, devNew = FALSE)
+```
+
+This suggests one main result:
+
+ * The consistent presence of four outliers and one rather severe outlier in several of the plots suggests that their removal may improve the model.
+
+### Numerical Assessment
+
+The LogisticDx package provides the dx function for computing diagnostics of our logistic regression model.  We will use this to look for influencial outliers; however our influencial outliers have a change in Pearson chi-sq closer to 15:
+
+```{r}
+diag <- dx(preliminary_final_model)
+outlier <- diag[which(diag$h>0.05)]
+outlier
+```
+
+Four influencial outliers are identified.  Consultation with a subject matter expert would allow us to make an informed decision on whether to include or exclude these subjects.  It appears that these four outliers represent the extreme values of the inverse square of the walking speed.  We can censor PO7440, PI5413, BI0650, & PA3753;  and repeat the analysis.  A separate .rmd file will be made for this.
+
+# References
+
+1. Hothorn T, Zeileis A, Farebrother  (pan.f) RW, Cummins  (pan.f) C, Millo G, Mitchell D. Lmtest: Testing Linear Regression Models.; 2020. Accessed April 30, 2021. https://CRAN.R-project.org/package=lmtest
+2. Hu B, Shao J, Palta M. PSEUDO-R2 IN LOGISTIC REGRESSION MODEL. :14.
+3. Signorell A. Tools for Descriptive Statistics [R Package DescTools Version 0.99.41]. Comprehensive R Archive Network (CRAN); 2021. Accessed June 6, 2021. https://CRAN.R-project.org/package=DescTools
+4. Sjoberg D. Gtsummary: Presentation-Ready Data Summary and Analytic Result Tables [R Package Gtsummary Version 1.4.1]. Comprehensive R Archive Network (CRAN); 2021. Accessed May 20, 2021. https://CRAN.R-project.org/package=gtsummary
+5. Solymos P, Keim J, Lele S. Resource Selection (Probability) Functions for Use-Availability Data [R Package ResourceSelection Version 0.3-5]. Comprehensive R Archive Network (CRAN); 2019. Accessed June 6, 2021. https://CRAN.R-project.org/package=ResourceSelection
+
+
+
