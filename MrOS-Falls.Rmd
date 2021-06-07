@@ -1475,7 +1475,7 @@ summary(EMM73)$coefficients[15,4]
 
 This doesn't meet our criterion, $\alpha = 0.05$.
 
-### step 6: preliminary final model
+### Preliminary final model
 
 None of our EMM models passed the liklihood ratio test; therefore the preliminary final model is the one identified from step 5:
 
@@ -1568,6 +1568,96 @@ AIC(step5_model4)
 BIC(step5_model4)
 ```
 Although the AIC & BIC of this model are slightly better, the Hosmer-Lemeshow and pesudo-$R^2$ values are worse.  We can proceed by completing the proposed censoring of observations above:
+
+## Creating a new model with censored outliers
+
+Censoring the outliers:
+
+```{r}
+step7_narm <- subset(step4_narm, id != 'PA3753')
+step7_narm <- subset(step7_narm, id != 'PI5413')
+step7_narm <- subset(step7_narm, id != 'PO7441')
+step7_narm <- subset(step7_narm, id != 'PI5436')
+```
+
+Creating the censored model:
+
+```{r}
+step7_model1 <- glm(
+  formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
+    pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg, 
+  family = "binomial",
+  data = step7_narm)
+
+summary(step7_model1)$coef
+```
+
+### Checking the fit
+
+For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
+
+```{r}
+hoslem.test(step7_narm$falls, fitted(step7_model1), g=10)
+```
+
+The moderate p-value reported above is adequately large, but only slightly better than that of the preliminary final. model.  To assess the discriminative ability of the preliminary final model we can compute the AUROC:
+
+```{r}
+#gof(x = step7_model1, lpotROC = TRUE)$auc
+```
+
+As reported above, AUROC of the preliminary final model is 66.3% (64.1%, 68.4%). The reported valyes being less than 70% is somewhat concerning, but the model may be adequate for some purposes.
+
+We can compute the pseudo-$R^2$ statistic (the McFadden $R^2$ statistic from the DescTools package):
+
+```{r}
+PseudoR2(step7_model1)
+```
+
+Considering that this $R^2$ statistic is often quite small compared to those reported in linear regression, the value reported above does not necessarily indicate adequate fit.  The model does not reach the threashold of 0.2, which has been described as a 'moderately strong model'.  It is slightly worse than the $R^2$ for the previous model.
+
+### AIC & BIC
+
+```{r}
+AIC(step7_model1)
+BIC(step7_model1)
+```
+
+The AIC is smaller than the previously reported value, but the BIC is larger.
+
+### Graphical Assessment
+
+We can use the 'plot' command from the LogisticDx package, including the change in chi-square residuals vs pi-hat, change in deviance vs pi-hat, change in beta vs pi-hat,change in chi-square residuals vs pi-hat:
+
+```{r}
+plot(step7_model1, devNew = FALSE)
+```
+
+This suggests one main result:
+
+ * Outliers still exist in the dataset, but the ones with the strongest influence on the model have been removed.
+
+### Numerical Assessment
+
+The LogisticDx package provides the dx function for computing diagnostics of our logistic regression model.  We will use this to look for influencial outliers; however our influencial outliers have a change in Pearson chi-sq closer to 15:
+
+```{r}
+diag <- dx(step7_model1)
+outlier <- diag[which(diag$h>0.05)]
+outlier
+```
+
+This shows that no new outliers have arisen after changes to the model after removing influencial outliers.
+
+## Final Model
+
+The model with outliers removed does not perform substantially better than the previous model.  Therefore we can use the preliminary final model as the final model:
+
+```{r}
+final_model <- preliminary_final_model
+```
+
 
 # References
 
