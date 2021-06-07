@@ -629,9 +629,7 @@ df_1
 ### Identifying continuous variables
 
 ```{r}
-# identify the continuious variables 
 glimpse(step3_narm1)
-
 ```
 
 ### Graphical approach
@@ -873,15 +871,17 @@ summary(step5_model2)$coef
 summary(step4_model)$deviance
 summary(step5_model1)$deviance
 summary(step5_model2)$deviance
-
-
 ```
+
+### Step 5 model
+
+Note from the above output that the second model, including the inverse square walking speed parameter but not grip strength transform, has the least deviance
 
 The transforms identified by the fractional polynomial track seem to produce less linear log odds with respect to the outcome. We'll proceed with two preliminary final models: one containing the transforms of average grip strength and walk speed, and one containing the original encoding. Even though the inverse square of walk speed has a more statistically significant Wald statistic, we can see from the above plot that the linear fit for the log odds is estimated above one for a significant portion of the range. At any rate, there isn't a significant change in deviance between the model generated in step 4 and the models containing the transformations. 
 
 
 ```{r}
-step5_model <- step4_model
+step5_model <- step5_model1
 summary(step5_model)$coef
 
 ```
@@ -895,316 +895,316 @@ Since there are thirteen variables in the model, there are ${13} \choose 2 $ $= 
 ```{r, interaction screening aka wall of shame}
 EMM1 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*mhstrk, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhstrk, data = step4_narm)
 EMM2 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*mhpark, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhpark, data = step4_narm)
 EMM3 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*mhcopd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mhcopd, data = step4_narm)
 EMM4 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*mharth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*mharth, data = step4_narm)
 EMM5 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*pascore, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*pascore, data = step4_narm)
 EMM6 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*qlhealth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*qlhealth, data = step4_narm)
 EMM7 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*hwbmi, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*hwbmi, data = step4_narm)
 EMM8 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*gsgrpavg, data = step4_narm)
 EMM9 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*inv_sq_walk, data = step4_narm)
 EMM10 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1fnd, data = step4_narm)
 EMM11 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1tbfkg, data = step4_narm)
 EMM12 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + giage1*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + giage1*b1tblkg, data = step4_narm)
 EMM13 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*mhpark, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mhpark, data = step4_narm)
 EMM14 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*mhcopd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mhcopd, data = step4_narm)
 EMM15 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*mharth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*mharth, data = step4_narm)
 EMM16 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*pascore, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*pascore, data = step4_narm)
 EMM17 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*qlhealth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*qlhealth, data = step4_narm)
 EMM18 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*hwbmi, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*hwbmi, data = step4_narm)
 EMM19 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*gsgrpavg, data = step4_narm)
 EMM20 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*inv_sq_walk, data = step4_narm)
 EMM21 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1fnd, data = step4_narm)
 EMM22 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1tbfkg, data = step4_narm)
 EMM23 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhstrk*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhstrk*b1tblkg, data = step4_narm)
 EMM24 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*mhcopd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*mhcopd, data = step4_narm)
 EMM25 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*mharth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*mharth, data = step4_narm)
 EMM26 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*pascore, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*pascore, data = step4_narm)
 EMM27 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*qlhealth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*qlhealth, data = step4_narm)
 EMM28 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*hwbmi, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*hwbmi, data = step4_narm)
 EMM29 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*gsgrpavg, data = step4_narm)
 EMM30 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*inv_sq_walk, data = step4_narm)
 EMM31 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1fnd, data = step4_narm)
 EMM32 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1tbfkg, data = step4_narm)
 EMM33 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhpark*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhpark*b1tblkg, data = step4_narm)
 EMM34 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*mharth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*mharth, data = step4_narm)
 EMM35 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*pascore, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*pascore, data = step4_narm)
 EMM36 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*qlhealth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*qlhealth, data = step4_narm)
 EMM37 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*hwbmi, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*hwbmi, data = step4_narm)
 EMM38 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*gsgrpavg, data = step4_narm)
 EMM39 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*inv_sq_walk, data = step4_narm)
 EMM40 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1fnd, data = step4_narm)
 EMM41 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1tbfkg, data = step4_narm)
 EMM42 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mhcopd*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mhcopd*b1tblkg, data = step4_narm)
 EMM43 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*pascore, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*pascore, data = step4_narm)
 EMM44 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*qlhealth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*qlhealth, data = step4_narm)
 EMM45 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*hwbmi, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*hwbmi, data = step4_narm)
 EMM46 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*gsgrpavg, data = step4_narm)
 EMM47 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*inv_sq_walk, data = step4_narm)
 EMM48 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1fnd, data = step4_narm)
 EMM49 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1tbfkg, data = step4_narm)
 EMM50 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + mharth*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + mharth*b1tblkg, data = step4_narm)
 EMM51 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + pascore*qlhealth, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*qlhealth, data = step4_narm)
 EMM52 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + pascore*hwbmi, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*hwbmi, data = step4_narm)
 EMM53 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + pascore*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*gsgrpavg, data = step4_narm)
 EMM54 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + pascore*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*inv_sq_walk, data = step4_narm)
 EMM55 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + pascore*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1fnd, data = step4_narm)
 EMM56 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + pascore*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1tbfkg, data = step4_narm)
 EMM57 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + pascore*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + pascore*b1tblkg, data = step4_narm)
 EMM58 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + qlhealth*hwbmi, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*hwbmi, data = step4_narm)
 EMM59 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + qlhealth*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*gsgrpavg, data = step4_narm)
 EMM60 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + qlhealth*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*inv_sq_walk, data = step4_narm)
 EMM61 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + qlhealth*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*b1fnd, data = step4_narm)
 EMM62 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + qlhealth*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*b1tbfkg, data = step4_narm)
 EMM63 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + qlhealth*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + qlhealth*b1tblkg, data = step4_narm)
 EMM64 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + hwbmi*gsgrpavg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*gsgrpavg, data = step4_narm)
 EMM65 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + hwbmi*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*inv_sq_walk, data = step4_narm)
 EMM66 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + hwbmi*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1fnd, data = step4_narm)
 EMM67 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + hwbmi*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1tbfkg, data = step4_narm)
 EMM68 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + hwbmi*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + hwbmi*b1tblkg, data = step4_narm)
 EMM69 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + gsgrpavg*nfwlkspd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*inv_sq_walk, data = step4_narm)
 EMM70 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + gsgrpavg*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1fnd, data = step4_narm)
 EMM71 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + gsgrpavg*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1tbfkg, data = step4_narm)
 EMM72 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + gsgrpavg*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + gsgrpavg*b1tblkg, data = step4_narm)
 EMM73 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + nfwlkspd*b1fnd, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + inv_sq_walk*b1fnd, data = step4_narm)
 EMM75 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + nfwlkspd*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + inv_sq_walk*b1tbfkg, data = step4_narm)
 EMM76 <-
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth +
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd +
-    b1tbfkg + b1tblkg + nfwlkspd*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd +
+    b1tbfkg + b1tblkg + inv_sq_walk*b1tblkg, data = step4_narm)
 EMM77 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + b1fnd*b1tbfkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + b1fnd*b1tbfkg, data = step4_narm)
 EMM74 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + b1fnd*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + b1fnd*b1tblkg, data = step4_narm)
 EMM78 <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-    pascore + qlhealth + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
-    b1tbfkg + b1tblkg + b1tbfkg*b1tblkg, data = step3_narm1)
+    pascore + qlhealth + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
+    b1tbfkg + b1tblkg + b1tbfkg*b1tblkg, data = step4_narm)
 
 EMM_list <- list(
   EMM1,
@@ -1367,10 +1367,10 @@ Let's keep this one.
 ```{r}
 preliminary_final_model <- 
   glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-      pascore + qlh + hwbmi + gsgrpavg + nfwlkspd + b1fnd + 
+      pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
       b1tbfkg + b1tblkg + mharth:b1fnd, 
       family = "binomial",
-      data = step3_narm1)
+      data = step4_narm)
 as.data.frame(summary(preliminary_final_model)$coef)
 
 # pass Wald test for alpha = 0.05  
@@ -1382,7 +1382,7 @@ as.data.frame(summary(preliminary_final_model)$coef)
 ```{r}
 mod.qlhealth <- glm(formula = falls ~ qlh,
                     family = "binomial",
-                    data = step3_narm1)
+                    data = step4_narm)
 summary(mod.qlhealth)
 ```
 
@@ -1394,7 +1394,7 @@ summary(mod.qlhealth)
 For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
 
 ```{r}
-hoslem.test(step3_narm1$falls, fitted(preliminary_final_model), g=10)
+hoslem.test(step4_narm$falls, fitted(preliminary_final_model), g=10)
 ```
 
 The small p-value reported above suggests that the model does not fit well; however out sample size > 1000, and therefore the Hosmer-Lemeshow test is likely to reject the model even if the fit is adequate.
