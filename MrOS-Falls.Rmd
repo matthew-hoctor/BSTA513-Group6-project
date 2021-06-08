@@ -1662,11 +1662,9 @@ final_model <- preliminary_final_model
 
 ## OR Calculate all of them
 
-## Table 1
+## Table 1 patient characteristics
 
 Calculate p-values for differences between outcomes in each exposure group
-
-## 
 
 # References
 
