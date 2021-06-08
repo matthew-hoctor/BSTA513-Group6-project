@@ -1481,11 +1481,6 @@ None of our EMM models passed the liklihood ratio test; therefore the preliminar
 
 ```{r}
 preliminary_final_model <- step5_model
-  # glm(formula = falls ~ giage1 + mhstrk + mhpark + mhcopd + mharth + 
-  #     pascore + qlh + hwbmi + gsgrpavg + inv_sq_walk + b1fnd + 
-  #     b1tbfkg + b1tblkg + mharth:b1fnd, 
-  #     family = "binomial",
-  #     data = step4_narm)
 as.data.frame(summary(preliminary_final_model)$coef)
 
 # pass Wald test for alpha = 0.05  
@@ -1501,10 +1496,13 @@ as.data.frame(summary(preliminary_final_model)$coef)
 For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
 
 ```{r}
-hoslem.test(step4_narm$falls, fitted(preliminary_final_model), g=10)
+n <- length(step4_narm$falls)
+n1 <- sum(step4_narm$falls)
+g <- max(10,min(n1/2, (n-n1)/2, 2+8^(n/1000)^2))
+hoslem.test(step4_narm$falls, fitted(preliminary_final_model), g=g)
 ```
 
-The small p-value reported above suggests that the model does not fit well; however out sample size is quite large (> 1000), and therefore the Hosmer-Lemeshow test is likely to reject the model even if the fit is adequate.
+The moderate p-value reported above suggests that the model fits fairly well.  Note that the g value was increased due to large sample size.
 
 ## Assessing discriminative ability
 
@@ -1598,7 +1596,7 @@ summary(step7_model1)$coef
 For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
 
 ```{r}
-hoslem.test(step7_narm$falls, fitted(step7_model1), g=10)
+hoslem.test(step7_narm$falls, fitted(step7_model1), g=g)
 ```
 
 The moderate p-value reported above is adequately large, but only slightly better than that of the preliminary final. model.  To assess the discriminative ability of the preliminary final model we can compute the AUROC:
@@ -1658,6 +1656,17 @@ The model with outliers removed does not perform substantially better than the p
 final_model <- preliminary_final_model
 ```
 
+# Results
+
+## Betas for final model
+
+## OR Calculate all of them
+
+## Table 1
+
+Calculate p-values for differences between outcomes in each exposure group
+
+## 
 
 # References
 
