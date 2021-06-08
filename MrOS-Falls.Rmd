@@ -373,7 +373,12 @@ MrOs %>%
                  ,gsgrpavg ~ "Average Grip Strength"
                  ,nfwlkspd ~ "Walking Speed"
                  ,b1fnd ~ "Corrected Femoral Neck BMD"
-                 ,b1fnd ~ "Corrected Total Hip BMD"
+                 ,b1thd ~ "Corrected Total Hip BMD"
+                 ,st_1 ~ "Birmingham Site"
+                 ,st_2 ~ "Minneapolis Site"
+                 ,st_3 ~ "Palo Alto Site"
+                 ,st_4 ~ "Pittsburg Site"
+                 ,st_5 ~ "San Diego Site"
     ),
     method.args = list(family = 'binomial'),
   )
@@ -1678,6 +1683,27 @@ final_model <- preliminary_final_model
 
 ## Betas for final model
 
+```{r}
+tbl_regression(final_model, 
+               label = list(giage1 ~ "Age"
+#                            ,mhdiab ~ "Diabetes"
+                            ,mhstrk ~ "Stroke"
+                            ,mhpark ~ "Parkinsons"
+                            ,mhcopd ~ "COPD"
+                            ,mharth ~ "Arthritis or Gout"
+#                            ,mhcancer ~ "Cancer"
+                            ,pascore ~ "PASE Score"
+                            ,qlh ~ "Subjective Health Rating"
+                            ,hwbmi ~ "Body Mass Index"
+                            ,b1tbfkg ~ "Total Body Fat"
+                            ,b1tblkg ~ "Lean Body Mass"
+                            ,gsgrpavg ~ "Average Grip Strength"
+                            ,inv_sq_walk ~ "Inverse Square Walking Speed"
+                            ,b1fnd ~ "Corrected Femoral Neck BMD"
+                            ),
+               exponentiate = FALSE)
+```
+
 ## OR Calculate all of them
 
 ```{r}
@@ -1697,7 +1723,6 @@ tbl_regression(final_model,
                             ,gsgrpavg ~ "Average Grip Strength"
                             ,inv_sq_walk ~ "Inverse Square Walking Speed"
                             ,b1fnd ~ "Corrected Femoral Neck BMD"
-                            ,b1fnd ~ "Corrected Total Hip BMD"
                             ),
                exponentiate = TRUE)
 ```
