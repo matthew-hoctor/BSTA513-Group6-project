@@ -357,6 +357,24 @@ MrOs %>%
   tbl_uvregression(
     method = glm,
     y = falls,
+    exponentiate = TRUE,
+    label = list(giage1 ~ "Age"
+                 ,mhdiab ~ "Diabetes"
+                 ,mhstrk ~ "Stroke"
+                 ,mhpark ~ "Parkinsons"
+                 ,mhcopd ~ "COPD"
+                 ,mharth ~ "Arthritis or Gout"
+                 ,mhcancer ~ "Cancer"
+                 ,pascore ~ "PASE Score"
+                 ,qlh ~ "Subjective Health Rating"
+                 ,hwbmi ~ "Body Mass Index"
+                 ,b1tbfkg ~ "Total Body Fat"
+                 ,b1tblkg ~ "Lean Body Mass"
+                 ,gsgrpavg ~ "Average Grip Strength"
+                 ,nfwlkspd ~ "Walking Speed"
+                 ,b1fnd ~ "Corrected Femoral Neck BMD"
+                 ,b1fnd ~ "Corrected Total Hip BMD"
+    ),
     method.args = list(family = 'binomial'),
   )
 ```
@@ -1661,6 +1679,29 @@ final_model <- preliminary_final_model
 ## Betas for final model
 
 ## OR Calculate all of them
+
+```{r}
+tbl_regression(final_model, 
+               label = list(giage1 ~ "Age"
+#                            ,mhdiab ~ "Diabetes"
+                            ,mhstrk ~ "Stroke"
+                            ,mhpark ~ "Parkinsons"
+                            ,mhcopd ~ "COPD"
+                            ,mharth ~ "Arthritis or Gout"
+#                            ,mhcancer ~ "Cancer"
+                            ,pascore ~ "PASE Score"
+                            ,qlh ~ "Subjective Health Rating"
+                            ,hwbmi ~ "Body Mass Index"
+                            ,b1tbfkg ~ "Total Body Fat"
+                            ,b1tblkg ~ "Lean Body Mass"
+                            ,gsgrpavg ~ "Average Grip Strength"
+                            ,inv_sq_walk ~ "Inverse Square Walking Speed"
+                            ,b1fnd ~ "Corrected Femoral Neck BMD"
+                            ,b1fnd ~ "Corrected Total Hip BMD"
+                            ),
+               exponentiate = TRUE)
+```
+
 
 ## Table 1 patient characteristics
 
