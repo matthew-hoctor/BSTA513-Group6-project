@@ -331,13 +331,19 @@ We can use the 'tbl_uvregression' function from the 'gtsummary' package to creat
 
 ```{r}
 MrOs %>% 
-  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5, qlh2, qlh3, qlh4, qlh5) %>% 
+  dplyr::select(
+    giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg,
+    falls, 
+    st_1,st_2,st_3,st_4,st_5,
+    qlh2, qlh3, qlh4, qlh5) %>% 
   tbl_uvregression(
     method = glm,
     y = falls,
+    hide_n = TRUE,
     exponentiate = TRUE,
     method.args = list(family = 'binomial'),
-    label = list(giage1 ~ "Age"
+    label = list(
+                  giage1 ~ "Age"
                  ,mhdiab ~ "Diabetes"
                  ,mhstrk ~ "Stroke"
                  ,mhpark ~ "Parkinsons"
@@ -386,6 +392,7 @@ MrOs %>%
     method = glm,
     y = falls,
     exponentiate = TRUE,
+    hide_n = TRUE,
     label = list(giage1 ~ "Age"
                  ,mhdiab ~ "Diabetes"
                  ,mhstrk ~ "Stroke"
