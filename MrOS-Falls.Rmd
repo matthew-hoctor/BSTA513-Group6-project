@@ -1716,13 +1716,16 @@ summary(step7_model1)$coef
 For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
 
 ```{r}
+n <- length(step7_narm$falls)
+n1 <- sum(step7_narm$falls)
+g <- max(10,min(n1/2, (n-n1)/2, 2+8^(n/1000)^2))
 hoslem.test(step7_narm$falls, fitted(step7_model1), g=g)
 ```
 
 The moderate p-value reported above is adequately large, but only slightly better than that of the preliminary final. model.  To assess the discriminative ability of the preliminary final model we can compute the AUROC:
 
 ```{r}
-#gof(x = step7_model1, lpotROC = TRUE)$auc
+gof(x = step7_model1, lpotROC = TRUE, g=g+1)$auc
 ```
 
 As reported above, AUROC of the preliminary final model is 66.3% (64.1%, 68.4%). The reported valyes being less than 70% is somewhat concerning, but the model may be adequate for some purposes.
