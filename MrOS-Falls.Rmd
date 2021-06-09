@@ -876,7 +876,7 @@ plot(step4_narm$nfwlkspd, (step4_narm$nfwlkspd+1)^-2)
 plot(step4_narm$gsgrpavg,step4_narm$grip_trform)
 ```
 
-From the above plots, we can formulate an offseted transformation of inverse squared walking speed, which decreases the disproportionate values given to small absolute values of walking speed:
+From the above plots, we can formulate an offset transformation of inverse squared walking speed, which decreases the disproportionate values given to small absolute values of walking speed:
 
 ```{r}
 step4_narm <- step4_narm %>% 
