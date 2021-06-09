@@ -447,6 +447,36 @@ kable(summary(full_model)$coef)
 summary(full_model)$coef[,4] < 0.05 
 ```
 
+#### Full model table for presentation
+
+```{r}
+tbl_regression(full_model, 
+    label = list(
+                  giage1 ~ "Age"
+                 ,mhdiab ~ "Diabetes"
+                 ,mhstrk ~ "Stroke"
+                 ,mhpark ~ "Parkinsons"
+                 ,mhcopd ~ "COPD"
+                 ,mharth ~ "Arthritis or Gout"
+                 ,mhcancer ~ "Cancer"
+                 ,pascore ~ "PASE Score"
+                 ,hwbmi ~ "Body Mass Index"
+                 ,b1tbfkg ~ "Total Body Fat"
+#                 ,b1tblkg ~ "Lean Body Mass"
+                 ,gsgrpavg ~ "Average Grip Strength"
+                 ,nfwlkspd ~ "Walking Speed"
+                 ,b1fnd ~ "Corrected Femoral Neck BMD"
+#                 ,b1thd ~ "Corrected Total Hip BMD"
+                 ,st_1 ~ "Birmingham Site (vs PO)"
+                 ,st_2 ~ "Minneapolis Site (vs PO)"
+                 ,st_3 ~ "Palo Alto Site (vs PO)"
+                 ,st_4 ~ "Pittsburg Site (vs PO)"
+                 ,st_5 ~ "San Diego Site (vs PO)"
+                 ,qlh ~ "Subjective Health Rating"
+    ),
+               exponentiate = FALSE)
+```
+
 ### Creating the reduced model
 
 Based on the above output we will exclude site, hx. diabetes, hx stroke, hx cancer, PACE score from the reduced model, and perform the liklihood ratio test between the full and reduced models.  We will utilize the 'lrtest' function from the 'lmtest' package to perform this computation:
@@ -576,6 +606,36 @@ lrtest(full_model, reduced_model)
 ```
 
 We've added back PACE score to achieve the most parsimonious model for which the full model does not provide significant advantage in performance by the likelihood ratio test.
+
+### Reduced model table for presentation
+
+```{r}
+tbl_regression(reduced_model, 
+    label = list(
+                  giage1 ~ "Age"
+#                 ,mhdiab ~ "Diabetes"
+#                 ,mhstrk ~ "Stroke"
+                 ,mhpark ~ "Parkinsons"
+                 ,mhcopd ~ "COPD"
+                 ,mharth ~ "Arthritis or Gout"
+#                 ,mhcancer ~ "Cancer"
+                 ,pascore ~ "PASE Score"
+                 ,hwbmi ~ "Body Mass Index"
+                 ,b1tbfkg ~ "Total Body Fat"
+#                 ,b1tblkg ~ "Lean Body Mass"
+                 ,gsgrpavg ~ "Average Grip Strength"
+                 ,nfwlkspd ~ "Walking Speed"
+                 ,b1fnd ~ "Corrected Femoral Neck BMD"
+#                 ,b1thd ~ "Corrected Total Hip BMD"
+                 # ,st_1 ~ "Birmingham Site (vs PO)"
+                 # ,st_2 ~ "Minneapolis Site (vs PO)"
+                 # ,st_3 ~ "Palo Alto Site (vs PO)"
+                 # ,st_4 ~ "Pittsburg Site (vs PO)"
+                 # ,st_5 ~ "San Diego Site (vs PO)"
+                 ,qlh ~ "Subjective Health Rating"
+    ),
+               exponentiate = FALSE)
+```
 
 ## Step 3: Check Removed Covariate(s) Using the Change in $\beta_i$ Method
 
