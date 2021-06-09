@@ -40,14 +40,11 @@ library(gtsummary)
 library(mfp)
 library(LogisticDx)
 library(ResourceSelection)
-#<<<<<<< HEAD
 library(multcomp)
 library(gridExtra)
 library(DescTools)
+library(GGally)
 
-#=======
-#library(multcomp)
-#>>>>>>> 82ce76d656392abc2e0fe83ee320d75fb605b007
 ```
 
 ```{r, user defined functions, include=FALSE}
@@ -91,7 +88,7 @@ We'll consider every variable in the data frame other than patient ID as a candi
 
 
 ```{r 1. variable }
-unique(MrOs$site)
+# unique(MrOs$site)
 MrOs <- MrOs %>% 
   mutate(st_1 = case_when(
     site == "PO" ~ 0,
@@ -147,16 +144,18 @@ MrOs$qlh2 <- ifelse(MrOs$qlhealth == 2,1,0)
 MrOs$qlh3 <- ifelse(MrOs$qlhealth == 3,1,0)
 MrOs$qlh4 <- ifelse(MrOs$qlhealth == 4,1,0)
 MrOs$qlh5 <- ifelse(MrOs$qlhealth == 5,1,0)
+
 ```
 
 
 ## Check Groups sizes for each unique value of each categorical variable
 
 ```{r check group sizes}
-MrOs_group_check = MrOs %>%  # why did this break?
-    dplyr::select(site, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, 
-    st_1, st_2, st_3, st_4, st_5,
-    qlh2, qlh3, qlh4, qlh5)
+MrOs_group_check = MrOs %>%  
+    dplyr::select(site, mhdiab, mhstrk,
+                  mhpark, mhcopd, mharth, mhcancer, 
+                  st_1, st_2, st_3, st_4, st_5,
+                  qlh2, qlh3, qlh4, qlh5)
 
 counts_list <- map(.x = as.list(MrOs_group_check), .f = function(x) {
   vector = unique(x)
@@ -177,6 +176,14 @@ Note that when the length of the unique level is 5994 (the number of total rows 
 This also serves as a sanity check for the above dummy variable generation. We see that the correct number of observations exist in each dummy variable by comparing the lower count in the dummy variables to the counts in `site`. 
 
 There are only 52 subjects with a history of Parkinson's. That may be an issue later. 
+
+# Collinearity 
+
+```{r}
+# colnames(MrOs)
+MrOs_coll <- MrOs %>% dplyr::select(giage1, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd) %>% drop_na()
+ggpairs(MrOs_coll)
+```
 
 # Variable Seleciton 
 
@@ -301,9 +308,9 @@ qlhealth_model <- glm(falls ~ qlh2 + qlh3 + qlh4 + qlh5,
                   family = binomial())
 
 # slope coefficients 
-betas <- qlhealth_model$coef[2:6]
+betas <- qlhealth_model$coef[2:5]
 # standard errors 
-ses <- as.data.frame(summary(qlhealth_model)$coef)$`Std. Error`[2:6]
+ses <- as.data.frame(summary(qlhealth_model)$coef)$`Std. Error`[2:5]
 # confidence interval beta & CI 
 beta_upper_bounds <- betas + qnorm(1-0.05/2)*ses
 beta_lower_bounds <- betas - qnorm(1-0.05/2)*ses
@@ -777,8 +784,9 @@ step3_narm1 = step3_narm1 %>% # #
   map_df(rev)
 gg1 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = giage1, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = giage1, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = giage1, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = giage1, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by Age") + 
   theme_minimal()
 
 # loess PACE score 
@@ -787,8 +795,9 @@ step3_narm1 = step3_narm1 %>%
   map_df(rev)
 gg2 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = pascore, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = pascore, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = pascore, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = pascore, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by PACE score") + 
   theme_minimal()
 
 # loess BMI 
@@ -797,8 +806,9 @@ step3_narm1 = step3_narm1 %>%
   map_df(rev)
 gg3 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = hwbmi, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = hwbmi, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = hwbmi, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = hwbmi, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by BMI") + 
   theme_minimal()
 
 # loess grip strength 
@@ -807,8 +817,9 @@ step3_narm1 = step3_narm1 %>%
   map_df(rev)
 gg4 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = gsgrpavg, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = gsgrpavg, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = gsgrpavg, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = gsgrpavg, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by Grip Strength") + 
   theme_minimal()
 
 # loess walk speed 
@@ -817,8 +828,9 @@ step3_narm1 = step3_narm1 %>%
   map_df(rev)
 gg5 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = nfwlkspd, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = nfwlkspd, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = nfwlkspd, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = nfwlkspd, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by Walk Speed") + 
   theme_minimal()
 
 # loess corrected neck BMD 
@@ -827,8 +839,9 @@ step3_narm1 = step3_narm1 %>%
   map_df(rev)
 gg6 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = b1fnd, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = b1fnd, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = b1fnd, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = b1fnd, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by Femoral Neck BMD") + 
   theme_minimal()
 
 # loess body fat mass 
@@ -837,8 +850,9 @@ step3_narm1 = step3_narm1 %>%
   map_df(rev)
 gg7 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = b1tbfkg, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = b1tbfkg, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = b1tbfkg, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = b1tbfkg, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by Total Fat Mass") + 
   theme_minimal()
 
 # loess body lean mass 
@@ -847,8 +861,9 @@ step3_narm1 = step3_narm1 %>%
   map_df(rev)
 gg8 <- 
   ggplot(data = step3_narm1) +
-  stat_smooth(mapping = aes(x = b1tblkg, y = falls), method = "loess") + 
-  stat_smooth(mapping = aes(x = b1tblkg, y = falls), method = "lm", color = "red") + 
+  stat_smooth(formula = y~x,mapping = aes(x = b1tblkg, y = falls), method = "loess") + 
+  stat_smooth(formula = y~x,mapping = aes(x = b1tblkg, y = falls), method = "lm", color = "red") + 
+  labs(title = "Mult. Falls by Total Lean Mass") + 
   theme_minimal()
 
 grid.arrange(gg1, 
@@ -858,7 +873,7 @@ grid.arrange(gg1,
              gg5,
              gg6,
              gg7,
-             gg8)
+             gg8, nrow = 4)
 
 ```
 
@@ -986,8 +1001,8 @@ step4_narm = step4_narm %>%
   map_df(rev)
 gg9 <-
   ggplot(data = step4_narm) +
-  stat_smooth(mapping = aes(x = inv_sq_walk, y = falls), method = "loess") +
-  stat_smooth(mapping = aes(x = inv_sq_walk, y = falls), method = "lm", color = "red") +
+  stat_smooth(formula = y~x, mapping = aes(x = inv_sq_walk, y = falls), method = "loess") +
+  stat_smooth(formula = y~x, mapping = aes(x = inv_sq_walk, y = falls), method = "lm", color = "red") +
   theme_minimal()
 
 
@@ -996,8 +1011,8 @@ step4_narm = step4_narm %>%
   map_df(rev)
 gg10 <-
   ggplot(data = step4_narm) +
-  stat_smooth(mapping = aes(x = grip_trform, y = falls), method = "loess") +
-  stat_smooth(mapping = aes(x = grip_trform, y = falls), method = "lm", color = "red") +
+  stat_smooth(formula = y~x, mapping = aes(x = grip_trform, y = falls), method = "loess") +
+  stat_smooth(formula = y~x, mapping = aes(x = grip_trform, y = falls), method = "lm", color = "red") +
   theme_minimal()
 
 grid.arrange(gg9, gg5, gg10, gg4)
@@ -1831,7 +1846,7 @@ tbl_regression(final_model,
 ## Table 1 patient characteristics
 
 ```{r}
-MrOs_check <- MrOs %>%  # why did this break?
+MrOs_check <- MrOs %>% 
     dplyr::select(falls, giage1, mhstrk, mhpark, mhcopd, mharth, pascore, qlh, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1tbfkg, b1tblkg)
 MrOs_check$censored <- complete.cases(MrOs_check)
 MrOs_check$censored2 <- ifelse(MrOs_check$censored == FALSE, "Excluded", "Included")
@@ -1841,7 +1856,7 @@ MrOs_check$censored2 <- ifelse(MrOs_check$censored == FALSE, "Excluded", "Includ
 ```
 
 ```{r}
-MrOs_check %>%  # why did this break?
+MrOs_check %>% 
     dplyr::select(falls, giage1, mhstrk, mhpark, mhcopd, mharth, pascore, qlh, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1tbfkg, b1tblkg, censored2)%>% 
     tbl_summary(by = censored2, missing = "no",
     statistic = list(all_continuous() ~ "{mean}",
