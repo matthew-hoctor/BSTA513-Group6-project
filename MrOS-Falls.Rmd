@@ -331,12 +331,46 @@ We can use the 'tbl_uvregression' function from the 'gtsummary' package to creat
 
 ```{r}
 MrOs %>% 
-  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5, qlh2, qlh3, qlh4, qlh5) %>% 
+  dplyr::select(
+    giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg,
+    falls, 
+    st_1,st_2,st_3,st_4,st_5,
+    qlh2, qlh3, qlh4, qlh5) %>% 
   tbl_uvregression(
     method = glm,
     y = falls,
+    hide_n = TRUE,
+    exponentiate = TRUE,
     method.args = list(family = 'binomial'),
-  )
+    label = list(
+                  giage1 ~ "Age"
+                 ,mhdiab ~ "Diabetes"
+                 ,mhstrk ~ "Stroke"
+                 ,mhpark ~ "Parkinsons"
+                 ,mhcopd ~ "COPD"
+                 ,mharth ~ "Arthritis or Gout"
+                 ,mhcancer ~ "Cancer"
+                 ,pascore ~ "PASE Score"
+                 ,hwbmi ~ "Body Mass Index"
+                 ,b1tbfkg ~ "Total Body Fat"
+                 ,b1tblkg ~ "Lean Body Mass"
+                 ,gsgrpavg ~ "Average Grip Strength"
+                 ,nfwlkspd ~ "Walking Speed"
+                 ,b1fnd ~ "Corrected Femoral Neck BMD"
+                 ,b1thd ~ "Corrected Total Hip BMD"
+                 ,st_1 ~ "Birmingham Site (vs PO)"
+                 ,st_2 ~ "Minneapolis Site (vs PO)"
+                 ,st_3 ~ "Palo Alto Site (vs PO)"
+                 ,st_4 ~ "Pittsburg Site (vs PO)"
+                 ,st_5 ~ "San Diego Site (vs PO)"
+                 ,qlh2 ~ "Good Preceived Health (vs Excellent)"
+                 ,qlh3 ~ "Fair Preceived Health (vs Excellent)"
+                 ,qlh4 ~ "Poor Preceived Health (vs Excellent)"
+                 ,qlh5 ~ "Very Poor Preceived Health (vs Excellent)"
+    ),
+  )%>%
+  modify_caption("**Initial Univariate Analysis**") %>%
+  bold_labels()
 ```
 
 ### Collapsing 'qlhealth'
@@ -358,6 +392,7 @@ MrOs %>%
     method = glm,
     y = falls,
     exponentiate = TRUE,
+    hide_n = TRUE,
     label = list(giage1 ~ "Age"
                  ,mhdiab ~ "Diabetes"
                  ,mhstrk ~ "Stroke"
@@ -374,14 +409,16 @@ MrOs %>%
                  ,nfwlkspd ~ "Walking Speed"
                  ,b1fnd ~ "Corrected Femoral Neck BMD"
                  ,b1thd ~ "Corrected Total Hip BMD"
-                 ,st_1 ~ "Birmingham Site"
-                 ,st_2 ~ "Minneapolis Site"
-                 ,st_3 ~ "Palo Alto Site"
-                 ,st_4 ~ "Pittsburg Site"
-                 ,st_5 ~ "San Diego Site"
+                 ,st_1 ~ "Birmingham Site (vs PO)"
+                 ,st_2 ~ "Minneapolis Site (vs PO)"
+                 ,st_3 ~ "Palo Alto Site (vs PO)"
+                 ,st_4 ~ "Pittsburg Site (vs PO)"
+                 ,st_5 ~ "San Diego Site (vs PO)"
     ),
     method.args = list(family = 'binomial'),
-  )
+  )%>%
+  modify_caption("**Univariate Analysis**") %>%
+  bold_labels()
 ```
 
 ## Step 2: First Multivariable Model
@@ -408,6 +445,36 @@ full_model <-
 
 kable(summary(full_model)$coef)
 summary(full_model)$coef[,4] < 0.05 
+```
+
+#### Full model table for presentation
+
+```{r}
+tbl_regression(full_model, 
+    label = list(
+                  giage1 ~ "Age"
+                 ,mhdiab ~ "Diabetes"
+                 ,mhstrk ~ "Stroke"
+                 ,mhpark ~ "Parkinsons"
+                 ,mhcopd ~ "COPD"
+                 ,mharth ~ "Arthritis or Gout"
+                 ,mhcancer ~ "Cancer"
+                 ,pascore ~ "PASE Score"
+                 ,hwbmi ~ "Body Mass Index"
+                 ,b1tbfkg ~ "Total Body Fat"
+#                 ,b1tblkg ~ "Lean Body Mass"
+                 ,gsgrpavg ~ "Average Grip Strength"
+                 ,nfwlkspd ~ "Walking Speed"
+                 ,b1fnd ~ "Corrected Femoral Neck BMD"
+#                 ,b1thd ~ "Corrected Total Hip BMD"
+                 ,st_1 ~ "Birmingham Site (vs PO)"
+                 ,st_2 ~ "Minneapolis Site (vs PO)"
+                 ,st_3 ~ "Palo Alto Site (vs PO)"
+                 ,st_4 ~ "Pittsburg Site (vs PO)"
+                 ,st_5 ~ "San Diego Site (vs PO)"
+                 ,qlh ~ "Subjective Health Rating"
+    ),
+               exponentiate = FALSE)
 ```
 
 ### Creating the reduced model
@@ -539,6 +606,36 @@ lrtest(full_model, reduced_model)
 ```
 
 We've added back PACE score to achieve the most parsimonious model for which the full model does not provide significant advantage in performance by the likelihood ratio test.
+
+### Reduced model table for presentation
+
+```{r}
+tbl_regression(reduced_model, 
+    label = list(
+                  giage1 ~ "Age"
+#                 ,mhdiab ~ "Diabetes"
+#                 ,mhstrk ~ "Stroke"
+                 ,mhpark ~ "Parkinsons"
+                 ,mhcopd ~ "COPD"
+                 ,mharth ~ "Arthritis or Gout"
+#                 ,mhcancer ~ "Cancer"
+                 ,pascore ~ "PASE Score"
+                 ,hwbmi ~ "Body Mass Index"
+                 ,b1tbfkg ~ "Total Body Fat"
+#                 ,b1tblkg ~ "Lean Body Mass"
+                 ,gsgrpavg ~ "Average Grip Strength"
+                 ,nfwlkspd ~ "Walking Speed"
+                 ,b1fnd ~ "Corrected Femoral Neck BMD"
+#                 ,b1thd ~ "Corrected Total Hip BMD"
+                 # ,st_1 ~ "Birmingham Site (vs PO)"
+                 # ,st_2 ~ "Minneapolis Site (vs PO)"
+                 # ,st_3 ~ "Palo Alto Site (vs PO)"
+                 # ,st_4 ~ "Pittsburg Site (vs PO)"
+                 # ,st_5 ~ "San Diego Site (vs PO)"
+                 ,qlh ~ "Subjective Health Rating"
+    ),
+               exponentiate = FALSE)
+```
 
 ## Step 3: Check Removed Covariate(s) Using the Change in $\beta_i$ Method
 
@@ -1619,13 +1716,16 @@ summary(step7_model1)$coef
 For the above model, there are several continuous variables; therefore $J\approx n$, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a $\chi^2_{J-(p+1)}$ distribution) do not hold.  Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:
 
 ```{r}
+n <- length(step7_narm$falls)
+n1 <- sum(step7_narm$falls)
+g <- max(10,min(n1/2, (n-n1)/2, 2+8^(n/1000)^2))
 hoslem.test(step7_narm$falls, fitted(step7_model1), g=g)
 ```
 
 The moderate p-value reported above is adequately large, but only slightly better than that of the preliminary final. model.  To assess the discriminative ability of the preliminary final model we can compute the AUROC:
 
 ```{r}
-#gof(x = step7_model1, lpotROC = TRUE)$auc
+gof(x = step7_model1, lpotROC = TRUE, g=g+1)$auc
 ```
 
 As reported above, AUROC of the preliminary final model is 66.3% (64.1%, 68.4%). The reported valyes being less than 70% is somewhat concerning, but the model may be adequate for some purposes.

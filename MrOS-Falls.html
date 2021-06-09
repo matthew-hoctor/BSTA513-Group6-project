@@ -1064,18 +1064,52 @@ as.data.frame(t(tbl))</code></pre>
 <h3>initial gtsummary output with ORs &amp; p-values</h3>
 <p>We can use the ‘tbl_uvregression’ function from the ‘gtsummary’ package to create a publishable table with the above information:</p>
 <pre class="r"><code>MrOs %&gt;% 
-  dplyr::select(giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg, falls, st_1,st_2,st_3,st_4,st_5, qlh2, qlh3, qlh4, qlh5) %&gt;% 
+  dplyr::select(
+    giage1, mhdiab, mhstrk, mhpark, mhcopd, mharth, mhcancer, pascore, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1thd, b1tbfkg, b1tblkg,
+    falls, 
+    st_1,st_2,st_3,st_4,st_5,
+    qlh2, qlh3, qlh4, qlh5) %&gt;% 
   tbl_uvregression(
     method = glm,
     y = falls,
+    hide_n = TRUE,
+    exponentiate = TRUE,
     method.args = list(family = &#39;binomial&#39;),
-  )</code></pre>
-<div id="bbhbnbimjr" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+    label = list(
+                  giage1 ~ &quot;Age&quot;
+                 ,mhdiab ~ &quot;Diabetes&quot;
+                 ,mhstrk ~ &quot;Stroke&quot;
+                 ,mhpark ~ &quot;Parkinsons&quot;
+                 ,mhcopd ~ &quot;COPD&quot;
+                 ,mharth ~ &quot;Arthritis or Gout&quot;
+                 ,mhcancer ~ &quot;Cancer&quot;
+                 ,pascore ~ &quot;PASE Score&quot;
+                 ,hwbmi ~ &quot;Body Mass Index&quot;
+                 ,b1tbfkg ~ &quot;Total Body Fat&quot;
+                 ,b1tblkg ~ &quot;Lean Body Mass&quot;
+                 ,gsgrpavg ~ &quot;Average Grip Strength&quot;
+                 ,nfwlkspd ~ &quot;Walking Speed&quot;
+                 ,b1fnd ~ &quot;Corrected Femoral Neck BMD&quot;
+                 ,b1thd ~ &quot;Corrected Total Hip BMD&quot;
+                 ,st_1 ~ &quot;Birmingham Site (vs PO)&quot;
+                 ,st_2 ~ &quot;Minneapolis Site (vs PO)&quot;
+                 ,st_3 ~ &quot;Palo Alto Site (vs PO)&quot;
+                 ,st_4 ~ &quot;Pittsburg Site (vs PO)&quot;
+                 ,st_5 ~ &quot;San Diego Site (vs PO)&quot;
+                 ,qlh2 ~ &quot;Good Preceived Health (vs Excellent)&quot;
+                 ,qlh3 ~ &quot;Fair Preceived Health (vs Excellent)&quot;
+                 ,qlh4 ~ &quot;Poor Preceived Health (vs Excellent)&quot;
+                 ,qlh5 ~ &quot;Very Poor Preceived Health (vs Excellent)&quot;
+    ),
+  )%&gt;%
+  modify_caption(&quot;**Initial Univariate Analysis**&quot;) %&gt;%
+  bold_labels()</code></pre>
+<div id="wvocjdlipt" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#bbhbnbimjr .gt_table {
+#wvocjdlipt .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1100,7 +1134,7 @@ as.data.frame(t(tbl))</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_heading {
+#wvocjdlipt .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1112,7 +1146,7 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_title {
+#wvocjdlipt .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1122,7 +1156,7 @@ as.data.frame(t(tbl))</code></pre>
   border-bottom-width: 0;
 }
 
-#bbhbnbimjr .gt_subtitle {
+#wvocjdlipt .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1132,13 +1166,13 @@ as.data.frame(t(tbl))</code></pre>
   border-top-width: 0;
 }
 
-#bbhbnbimjr .gt_bottom_border {
+#wvocjdlipt .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_col_headings {
+#wvocjdlipt .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1153,7 +1187,7 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_col_heading {
+#wvocjdlipt .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1173,7 +1207,7 @@ as.data.frame(t(tbl))</code></pre>
   overflow-x: hidden;
 }
 
-#bbhbnbimjr .gt_column_spanner_outer {
+#wvocjdlipt .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1185,15 +1219,15 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 4px;
 }
 
-#bbhbnbimjr .gt_column_spanner_outer:first-child {
+#wvocjdlipt .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#bbhbnbimjr .gt_column_spanner_outer:last-child {
+#wvocjdlipt .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#bbhbnbimjr .gt_column_spanner {
+#wvocjdlipt .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1205,7 +1239,7 @@ as.data.frame(t(tbl))</code></pre>
   width: 100%;
 }
 
-#bbhbnbimjr .gt_group_heading {
+#wvocjdlipt .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1227,7 +1261,7 @@ as.data.frame(t(tbl))</code></pre>
   vertical-align: middle;
 }
 
-#bbhbnbimjr .gt_empty_group_heading {
+#wvocjdlipt .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1242,15 +1276,15 @@ as.data.frame(t(tbl))</code></pre>
   vertical-align: middle;
 }
 
-#bbhbnbimjr .gt_from_md > :first-child {
+#wvocjdlipt .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#bbhbnbimjr .gt_from_md > :last-child {
+#wvocjdlipt .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#bbhbnbimjr .gt_row {
+#wvocjdlipt .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1269,7 +1303,7 @@ as.data.frame(t(tbl))</code></pre>
   overflow-x: hidden;
 }
 
-#bbhbnbimjr .gt_stub {
+#wvocjdlipt .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1281,7 +1315,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-left: 12px;
 }
 
-#bbhbnbimjr .gt_summary_row {
+#wvocjdlipt .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1291,7 +1325,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 5px;
 }
 
-#bbhbnbimjr .gt_first_summary_row {
+#wvocjdlipt .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1301,7 +1335,7 @@ as.data.frame(t(tbl))</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_grand_summary_row {
+#wvocjdlipt .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1311,7 +1345,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 5px;
 }
 
-#bbhbnbimjr .gt_first_grand_summary_row {
+#wvocjdlipt .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1321,11 +1355,11 @@ as.data.frame(t(tbl))</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_striped {
+#wvocjdlipt .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#bbhbnbimjr .gt_table_body {
+#wvocjdlipt .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1334,7 +1368,7 @@ as.data.frame(t(tbl))</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_footnotes {
+#wvocjdlipt .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1348,13 +1382,13 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_footnote {
+#wvocjdlipt .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#bbhbnbimjr .gt_sourcenotes {
+#wvocjdlipt .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1368,183 +1402,159 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#bbhbnbimjr .gt_sourcenote {
+#wvocjdlipt .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#bbhbnbimjr .gt_left {
+#wvocjdlipt .gt_left {
   text-align: left;
 }
 
-#bbhbnbimjr .gt_center {
+#wvocjdlipt .gt_center {
   text-align: center;
 }
 
-#bbhbnbimjr .gt_right {
+#wvocjdlipt .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#bbhbnbimjr .gt_font_normal {
+#wvocjdlipt .gt_font_normal {
   font-weight: normal;
 }
 
-#bbhbnbimjr .gt_font_bold {
+#wvocjdlipt .gt_font_bold {
   font-weight: bold;
 }
 
-#bbhbnbimjr .gt_font_italic {
+#wvocjdlipt .gt_font_italic {
   font-style: italic;
 }
 
-#bbhbnbimjr .gt_super {
+#wvocjdlipt .gt_super {
   font-size: 65%;
 }
 
-#bbhbnbimjr .gt_footnote_marks {
+#wvocjdlipt .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
 }
 </style>
 <table class="gt_table">
+  <caption><strong>Initial Univariate Analysis</strong></caption>
   
   <thead class="gt_col_headings">
     <tr>
       <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>log(OR)</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>OR</strong><sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong></th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
-    <tr><td class="gt_row gt_left">giage1</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.04</td>
-<td class="gt_row gt_center">0.03, 0.06</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Age</td>
+<td class="gt_row gt_center">1.04</td>
+<td class="gt_row gt_center">1.03, 1.06</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">mhdiab</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.39</td>
-<td class="gt_row gt_center">0.15, 0.61</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Diabetes</td>
+<td class="gt_row gt_center">1.47</td>
+<td class="gt_row gt_center">1.16, 1.84</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">mhstrk</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.54</td>
-<td class="gt_row gt_center">0.23, 0.83</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Stroke</td>
+<td class="gt_row gt_center">1.72</td>
+<td class="gt_row gt_center">1.26, 2.30</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">mhpark</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">1.7</td>
-<td class="gt_row gt_center">1.0, 2.4</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Parkinsons</td>
+<td class="gt_row gt_center">5.40</td>
+<td class="gt_row gt_center">2.69, 10.8</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">mhcopd</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.60</td>
-<td class="gt_row gt_center">0.38, 0.82</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">COPD</td>
+<td class="gt_row gt_center">1.82</td>
+<td class="gt_row gt_center">1.46, 2.26</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">mharth</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.59</td>
-<td class="gt_row gt_center">0.44, 0.75</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Arthritis or Gout</td>
+<td class="gt_row gt_center">1.81</td>
+<td class="gt_row gt_center">1.55, 2.11</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">mhcancer</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.25</td>
-<td class="gt_row gt_center">0.08, 0.41</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Cancer</td>
+<td class="gt_row gt_center">1.28</td>
+<td class="gt_row gt_center">1.08, 1.50</td>
 <td class="gt_row gt_center">0.003</td></tr>
-    <tr><td class="gt_row gt_left">pascore</td>
-<td class="gt_row gt_center">5221</td>
-<td class="gt_row gt_center">0.00</td>
-<td class="gt_row gt_center">0.00, 0.00</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">PASE Score</td>
+<td class="gt_row gt_center">1.00</td>
+<td class="gt_row gt_center">1.00, 1.00</td>
 <td class="gt_row gt_center">0.013</td></tr>
-    <tr><td class="gt_row gt_left">hwbmi</td>
-<td class="gt_row gt_center">5217</td>
-<td class="gt_row gt_center">0.03</td>
-<td class="gt_row gt_center">0.02, 0.05</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Body Mass Index</td>
+<td class="gt_row gt_center">1.04</td>
+<td class="gt_row gt_center">1.02, 1.06</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">gsgrpavg</td>
-<td class="gt_row gt_center">5134</td>
-<td class="gt_row gt_center">-0.05</td>
-<td class="gt_row gt_center">-0.06, -0.04</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Average Grip Strength</td>
+<td class="gt_row gt_center">0.95</td>
+<td class="gt_row gt_center">0.94, 0.96</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">nfwlkspd</td>
-<td class="gt_row gt_center">5218</td>
-<td class="gt_row gt_center">-1.5</td>
-<td class="gt_row gt_center">-1.8, -1.1</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Walking Speed</td>
+<td class="gt_row gt_center">0.22</td>
+<td class="gt_row gt_center">0.16, 0.32</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">b1fnd</td>
-<td class="gt_row gt_center">5223</td>
-<td class="gt_row gt_center">0.57</td>
-<td class="gt_row gt_center">-0.02, 1.2</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Corrected Femoral Neck BMD</td>
+<td class="gt_row gt_center">1.76</td>
+<td class="gt_row gt_center">0.98, 3.17</td>
 <td class="gt_row gt_center">0.059</td></tr>
-    <tr><td class="gt_row gt_left">b1thd</td>
-<td class="gt_row gt_center">5223</td>
-<td class="gt_row gt_center">0.31</td>
-<td class="gt_row gt_center">-0.24, 0.86</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Corrected Total Hip BMD</td>
+<td class="gt_row gt_center">1.37</td>
+<td class="gt_row gt_center">0.79, 2.36</td>
 <td class="gt_row gt_center">0.3</td></tr>
-    <tr><td class="gt_row gt_left">b1tbfkg</td>
-<td class="gt_row gt_center">5194</td>
-<td class="gt_row gt_center">0.02</td>
-<td class="gt_row gt_center">0.01, 0.04</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Total Body Fat</td>
+<td class="gt_row gt_center">1.03</td>
+<td class="gt_row gt_center">1.01, 1.04</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">b1tblkg</td>
-<td class="gt_row gt_center">5194</td>
-<td class="gt_row gt_center">0.00</td>
-<td class="gt_row gt_center">-0.01, 0.01</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Lean Body Mass</td>
+<td class="gt_row gt_center">1.00</td>
+<td class="gt_row gt_center">0.99, 1.01</td>
 <td class="gt_row gt_center">0.8</td></tr>
-    <tr><td class="gt_row gt_left">st_1</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.20</td>
-<td class="gt_row gt_center">0.00, 0.40</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Birmingham Site (vs PO)</td>
+<td class="gt_row gt_center">1.22</td>
+<td class="gt_row gt_center">1.00, 1.49</td>
 <td class="gt_row gt_center">0.044</td></tr>
-    <tr><td class="gt_row gt_left">st_2</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.16</td>
-<td class="gt_row gt_center">-0.03, 0.35</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Minneapolis Site (vs PO)</td>
+<td class="gt_row gt_center">1.18</td>
+<td class="gt_row gt_center">0.97, 1.42</td>
 <td class="gt_row gt_center">0.10</td></tr>
-    <tr><td class="gt_row gt_left">st_3</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.07</td>
-<td class="gt_row gt_center">-0.14, 0.27</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Palo Alto Site (vs PO)</td>
+<td class="gt_row gt_center">1.07</td>
+<td class="gt_row gt_center">0.87, 1.30</td>
 <td class="gt_row gt_center">0.5</td></tr>
-    <tr><td class="gt_row gt_left">st_4</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">-0.15</td>
-<td class="gt_row gt_center">-0.36, 0.06</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Pittsburg Site (vs PO)</td>
+<td class="gt_row gt_center">0.86</td>
+<td class="gt_row gt_center">0.70, 1.06</td>
 <td class="gt_row gt_center">0.2</td></tr>
-    <tr><td class="gt_row gt_left">st_5</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">-0.18</td>
-<td class="gt_row gt_center">-0.40, 0.02</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">San Diego Site (vs PO)</td>
+<td class="gt_row gt_center">0.83</td>
+<td class="gt_row gt_center">0.67, 1.03</td>
 <td class="gt_row gt_center">0.090</td></tr>
-    <tr><td class="gt_row gt_left">qlh2</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.02</td>
-<td class="gt_row gt_center">-0.13, 0.17</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Good Preceived Health (vs Excellent)</td>
+<td class="gt_row gt_center">1.02</td>
+<td class="gt_row gt_center">0.87, 1.19</td>
 <td class="gt_row gt_center">0.8</td></tr>
-    <tr><td class="gt_row gt_left">qlh3</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">0.60</td>
-<td class="gt_row gt_center">0.39, 0.81</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Fair Preceived Health (vs Excellent)</td>
+<td class="gt_row gt_center">1.83</td>
+<td class="gt_row gt_center">1.48, 2.25</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">qlh4</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">1.1</td>
-<td class="gt_row gt_center">0.55, 1.7</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Poor Preceived Health (vs Excellent)</td>
+<td class="gt_row gt_center">3.12</td>
+<td class="gt_row gt_center">1.74, 5.41</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">qlh5</td>
-<td class="gt_row gt_center">5224</td>
-<td class="gt_row gt_center">1.6</td>
-<td class="gt_row gt_center">0.31, 2.8</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Very Poor Preceived Health (vs Excellent)</td>
+<td class="gt_row gt_center">4.73</td>
+<td class="gt_row gt_center">1.36, 15.7</td>
 <td class="gt_row gt_center">0.010</td></tr>
   </tbody>
   
   <tfoot>
     <tr class="gt_footnotes">
-      <td colspan="5">
+      <td colspan="4">
         <p class="gt_footnote">
           <sup class="gt_footnote_marks">
             <em>1</em>
@@ -1573,6 +1583,7 @@ as.data.frame(t(tbl))</code></pre>
     method = glm,
     y = falls,
     exponentiate = TRUE,
+    hide_n = TRUE,
     label = list(giage1 ~ &quot;Age&quot;
                  ,mhdiab ~ &quot;Diabetes&quot;
                  ,mhstrk ~ &quot;Stroke&quot;
@@ -1589,20 +1600,22 @@ as.data.frame(t(tbl))</code></pre>
                  ,nfwlkspd ~ &quot;Walking Speed&quot;
                  ,b1fnd ~ &quot;Corrected Femoral Neck BMD&quot;
                  ,b1thd ~ &quot;Corrected Total Hip BMD&quot;
-                 ,st_1 ~ &quot;Birmingham Site&quot;
-                 ,st_2 ~ &quot;Minneapolis Site&quot;
-                 ,st_3 ~ &quot;Palo Alto Site&quot;
-                 ,st_4 ~ &quot;Pittsburg Site&quot;
-                 ,st_5 ~ &quot;San Diego Site&quot;
+                 ,st_1 ~ &quot;Birmingham Site (vs PO)&quot;
+                 ,st_2 ~ &quot;Minneapolis Site (vs PO)&quot;
+                 ,st_3 ~ &quot;Palo Alto Site (vs PO)&quot;
+                 ,st_4 ~ &quot;Pittsburg Site (vs PO)&quot;
+                 ,st_5 ~ &quot;San Diego Site (vs PO)&quot;
     ),
     method.args = list(family = &#39;binomial&#39;),
-  )</code></pre>
-<div id="ypeyozulxq" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+  )%&gt;%
+  modify_caption(&quot;**Univariate Analysis**&quot;) %&gt;%
+  bold_labels()</code></pre>
+<div id="aztuyhduex" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#ypeyozulxq .gt_table {
+#aztuyhduex .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1627,7 +1640,7 @@ as.data.frame(t(tbl))</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_heading {
+#aztuyhduex .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1639,7 +1652,7 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_title {
+#aztuyhduex .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1649,7 +1662,7 @@ as.data.frame(t(tbl))</code></pre>
   border-bottom-width: 0;
 }
 
-#ypeyozulxq .gt_subtitle {
+#aztuyhduex .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1659,13 +1672,13 @@ as.data.frame(t(tbl))</code></pre>
   border-top-width: 0;
 }
 
-#ypeyozulxq .gt_bottom_border {
+#aztuyhduex .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_col_headings {
+#aztuyhduex .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1680,7 +1693,7 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_col_heading {
+#aztuyhduex .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1700,7 +1713,7 @@ as.data.frame(t(tbl))</code></pre>
   overflow-x: hidden;
 }
 
-#ypeyozulxq .gt_column_spanner_outer {
+#aztuyhduex .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1712,15 +1725,15 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 4px;
 }
 
-#ypeyozulxq .gt_column_spanner_outer:first-child {
+#aztuyhduex .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ypeyozulxq .gt_column_spanner_outer:last-child {
+#aztuyhduex .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ypeyozulxq .gt_column_spanner {
+#aztuyhduex .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1732,7 +1745,7 @@ as.data.frame(t(tbl))</code></pre>
   width: 100%;
 }
 
-#ypeyozulxq .gt_group_heading {
+#aztuyhduex .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1754,7 +1767,7 @@ as.data.frame(t(tbl))</code></pre>
   vertical-align: middle;
 }
 
-#ypeyozulxq .gt_empty_group_heading {
+#aztuyhduex .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1769,15 +1782,15 @@ as.data.frame(t(tbl))</code></pre>
   vertical-align: middle;
 }
 
-#ypeyozulxq .gt_from_md > :first-child {
+#aztuyhduex .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ypeyozulxq .gt_from_md > :last-child {
+#aztuyhduex .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ypeyozulxq .gt_row {
+#aztuyhduex .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1796,7 +1809,7 @@ as.data.frame(t(tbl))</code></pre>
   overflow-x: hidden;
 }
 
-#ypeyozulxq .gt_stub {
+#aztuyhduex .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1808,7 +1821,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-left: 12px;
 }
 
-#ypeyozulxq .gt_summary_row {
+#aztuyhduex .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1818,7 +1831,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 5px;
 }
 
-#ypeyozulxq .gt_first_summary_row {
+#aztuyhduex .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1828,7 +1841,7 @@ as.data.frame(t(tbl))</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_grand_summary_row {
+#aztuyhduex .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1838,7 +1851,7 @@ as.data.frame(t(tbl))</code></pre>
   padding-right: 5px;
 }
 
-#ypeyozulxq .gt_first_grand_summary_row {
+#aztuyhduex .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1848,11 +1861,11 @@ as.data.frame(t(tbl))</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_striped {
+#aztuyhduex .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ypeyozulxq .gt_table_body {
+#aztuyhduex .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1861,7 +1874,7 @@ as.data.frame(t(tbl))</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_footnotes {
+#aztuyhduex .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1875,13 +1888,13 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_footnote {
+#aztuyhduex .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#ypeyozulxq .gt_sourcenotes {
+#aztuyhduex .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1895,160 +1908,139 @@ as.data.frame(t(tbl))</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ypeyozulxq .gt_sourcenote {
+#aztuyhduex .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#ypeyozulxq .gt_left {
+#aztuyhduex .gt_left {
   text-align: left;
 }
 
-#ypeyozulxq .gt_center {
+#aztuyhduex .gt_center {
   text-align: center;
 }
 
-#ypeyozulxq .gt_right {
+#aztuyhduex .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ypeyozulxq .gt_font_normal {
+#aztuyhduex .gt_font_normal {
   font-weight: normal;
 }
 
-#ypeyozulxq .gt_font_bold {
+#aztuyhduex .gt_font_bold {
   font-weight: bold;
 }
 
-#ypeyozulxq .gt_font_italic {
+#aztuyhduex .gt_font_italic {
   font-style: italic;
 }
 
-#ypeyozulxq .gt_super {
+#aztuyhduex .gt_super {
   font-size: 65%;
 }
 
-#ypeyozulxq .gt_footnote_marks {
+#aztuyhduex .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
 }
 </style>
 <table class="gt_table">
+  <caption><strong>Univariate Analysis</strong></caption>
   
   <thead class="gt_col_headings">
     <tr>
       <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N</strong></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>OR</strong><sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
       <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong></th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
-    <tr><td class="gt_row gt_left">Age</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Age</td>
 <td class="gt_row gt_center">1.04</td>
 <td class="gt_row gt_center">1.03, 1.06</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Diabetes</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Diabetes</td>
 <td class="gt_row gt_center">1.47</td>
 <td class="gt_row gt_center">1.16, 1.84</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Stroke</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Stroke</td>
 <td class="gt_row gt_center">1.72</td>
 <td class="gt_row gt_center">1.26, 2.30</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Parkinsons</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Parkinsons</td>
 <td class="gt_row gt_center">5.40</td>
 <td class="gt_row gt_center">2.69, 10.8</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">COPD</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">COPD</td>
 <td class="gt_row gt_center">1.82</td>
 <td class="gt_row gt_center">1.46, 2.26</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Arthritis or Gout</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Arthritis or Gout</td>
 <td class="gt_row gt_center">1.81</td>
 <td class="gt_row gt_center">1.55, 2.11</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Cancer</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Cancer</td>
 <td class="gt_row gt_center">1.28</td>
 <td class="gt_row gt_center">1.08, 1.50</td>
 <td class="gt_row gt_center">0.003</td></tr>
-    <tr><td class="gt_row gt_left">PASE Score</td>
-<td class="gt_row gt_center">5221</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">PASE Score</td>
 <td class="gt_row gt_center">1.00</td>
 <td class="gt_row gt_center">1.00, 1.00</td>
 <td class="gt_row gt_center">0.013</td></tr>
-    <tr><td class="gt_row gt_left">Body Mass Index</td>
-<td class="gt_row gt_center">5217</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Body Mass Index</td>
 <td class="gt_row gt_center">1.04</td>
 <td class="gt_row gt_center">1.02, 1.06</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Average Grip Strength</td>
-<td class="gt_row gt_center">5134</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Average Grip Strength</td>
 <td class="gt_row gt_center">0.95</td>
 <td class="gt_row gt_center">0.94, 0.96</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Walking Speed</td>
-<td class="gt_row gt_center">5218</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Walking Speed</td>
 <td class="gt_row gt_center">0.22</td>
 <td class="gt_row gt_center">0.16, 0.32</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Corrected Femoral Neck BMD</td>
-<td class="gt_row gt_center">5223</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Corrected Femoral Neck BMD</td>
 <td class="gt_row gt_center">1.76</td>
 <td class="gt_row gt_center">0.98, 3.17</td>
 <td class="gt_row gt_center">0.059</td></tr>
-    <tr><td class="gt_row gt_left">Corrected Total Hip BMD</td>
-<td class="gt_row gt_center">5223</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Corrected Total Hip BMD</td>
 <td class="gt_row gt_center">1.37</td>
 <td class="gt_row gt_center">0.79, 2.36</td>
 <td class="gt_row gt_center">0.3</td></tr>
-    <tr><td class="gt_row gt_left">Total Body Fat</td>
-<td class="gt_row gt_center">5194</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Total Body Fat</td>
 <td class="gt_row gt_center">1.03</td>
 <td class="gt_row gt_center">1.01, 1.04</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
-    <tr><td class="gt_row gt_left">Lean Body Mass</td>
-<td class="gt_row gt_center">5194</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Lean Body Mass</td>
 <td class="gt_row gt_center">1.00</td>
 <td class="gt_row gt_center">0.99, 1.01</td>
 <td class="gt_row gt_center">0.8</td></tr>
-    <tr><td class="gt_row gt_left">Birmingham Site</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Birmingham Site (vs PO)</td>
 <td class="gt_row gt_center">1.22</td>
 <td class="gt_row gt_center">1.00, 1.49</td>
 <td class="gt_row gt_center">0.044</td></tr>
-    <tr><td class="gt_row gt_left">Minneapolis Site</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Minneapolis Site (vs PO)</td>
 <td class="gt_row gt_center">1.18</td>
 <td class="gt_row gt_center">0.97, 1.42</td>
 <td class="gt_row gt_center">0.10</td></tr>
-    <tr><td class="gt_row gt_left">Palo Alto Site</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Palo Alto Site (vs PO)</td>
 <td class="gt_row gt_center">1.07</td>
 <td class="gt_row gt_center">0.87, 1.30</td>
 <td class="gt_row gt_center">0.5</td></tr>
-    <tr><td class="gt_row gt_left">Pittsburg Site</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Pittsburg Site (vs PO)</td>
 <td class="gt_row gt_center">0.86</td>
 <td class="gt_row gt_center">0.70, 1.06</td>
 <td class="gt_row gt_center">0.2</td></tr>
-    <tr><td class="gt_row gt_left">San Diego Site</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">San Diego Site (vs PO)</td>
 <td class="gt_row gt_center">0.83</td>
 <td class="gt_row gt_center">0.67, 1.03</td>
 <td class="gt_row gt_center">0.090</td></tr>
-    <tr><td class="gt_row gt_left">Subjective Health Rating</td>
-<td class="gt_row gt_center">5224</td>
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">Subjective Health Rating</td>
 <td class="gt_row gt_center">2.03</td>
 <td class="gt_row gt_center">1.66, 2.47</td>
 <td class="gt_row gt_center">&lt;0.001</td></tr>
@@ -2056,7 +2048,7 @@ as.data.frame(t(tbl))</code></pre>
   
   <tfoot>
     <tr class="gt_footnotes">
-      <td colspan="5">
+      <td colspan="4">
         <p class="gt_footnote">
           <sup class="gt_footnote_marks">
             <em>1</em>
@@ -2252,6 +2244,477 @@ kable(summary(full_model)$coef)</code></pre>
 ##        TRUE        TRUE        TRUE       FALSE       FALSE       FALSE 
 ##        st_4        st_5 
 ##       FALSE       FALSE</code></pre>
+<div id="full-model-table-for-presentation" class="section level4">
+<h4>Full model table for presentation</h4>
+<pre class="r"><code>tbl_regression(full_model, 
+    label = list(
+                  giage1 ~ &quot;Age&quot;
+                 ,mhdiab ~ &quot;Diabetes&quot;
+                 ,mhstrk ~ &quot;Stroke&quot;
+                 ,mhpark ~ &quot;Parkinsons&quot;
+                 ,mhcopd ~ &quot;COPD&quot;
+                 ,mharth ~ &quot;Arthritis or Gout&quot;
+                 ,mhcancer ~ &quot;Cancer&quot;
+                 ,pascore ~ &quot;PASE Score&quot;
+                 ,hwbmi ~ &quot;Body Mass Index&quot;
+                 ,b1tbfkg ~ &quot;Total Body Fat&quot;
+#                 ,b1tblkg ~ &quot;Lean Body Mass&quot;
+                 ,gsgrpavg ~ &quot;Average Grip Strength&quot;
+                 ,nfwlkspd ~ &quot;Walking Speed&quot;
+                 ,b1fnd ~ &quot;Corrected Femoral Neck BMD&quot;
+#                 ,b1thd ~ &quot;Corrected Total Hip BMD&quot;
+                 ,st_1 ~ &quot;Birmingham Site (vs PO)&quot;
+                 ,st_2 ~ &quot;Minneapolis Site (vs PO)&quot;
+                 ,st_3 ~ &quot;Palo Alto Site (vs PO)&quot;
+                 ,st_4 ~ &quot;Pittsburg Site (vs PO)&quot;
+                 ,st_5 ~ &quot;San Diego Site (vs PO)&quot;
+                 ,qlh ~ &quot;Subjective Health Rating&quot;
+    ),
+               exponentiate = FALSE)</code></pre>
+<div id="mzsoejhtnn" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#mzsoejhtnn .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#mzsoejhtnn .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#mzsoejhtnn .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#mzsoejhtnn .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#mzsoejhtnn .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#mzsoejhtnn .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#mzsoejhtnn .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#mzsoejhtnn .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#mzsoejhtnn .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#mzsoejhtnn .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#mzsoejhtnn .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#mzsoejhtnn .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#mzsoejhtnn .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#mzsoejhtnn .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#mzsoejhtnn .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#mzsoejhtnn .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#mzsoejhtnn .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#mzsoejhtnn .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#mzsoejhtnn .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#mzsoejhtnn .gt_left {
+  text-align: left;
+}
+
+#mzsoejhtnn .gt_center {
+  text-align: center;
+}
+
+#mzsoejhtnn .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#mzsoejhtnn .gt_font_normal {
+  font-weight: normal;
+}
+
+#mzsoejhtnn .gt_font_bold {
+  font-weight: bold;
+}
+
+#mzsoejhtnn .gt_font_italic {
+  font-style: italic;
+}
+
+#mzsoejhtnn .gt_super {
+  font-size: 65%;
+}
+
+#mzsoejhtnn .gt_footnote_marks {
+  font-style: italic;
+  font-weight: normal;
+  font-size: 65%;
+}
+</style>
+<table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>log(OR)</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td class="gt_row gt_left">Age</td>
+<td class="gt_row gt_center">0.02</td>
+<td class="gt_row gt_center">0.01, 0.04</td>
+<td class="gt_row gt_center">0.008</td></tr>
+    <tr><td class="gt_row gt_left">Diabetes</td>
+<td class="gt_row gt_center">0.20</td>
+<td class="gt_row gt_center">-0.05, 0.45</td>
+<td class="gt_row gt_center">0.11</td></tr>
+    <tr><td class="gt_row gt_left">Stroke</td>
+<td class="gt_row gt_center">0.31</td>
+<td class="gt_row gt_center">-0.02, 0.62</td>
+<td class="gt_row gt_center">0.061</td></tr>
+    <tr><td class="gt_row gt_left">Parkinsons</td>
+<td class="gt_row gt_center">1.7</td>
+<td class="gt_row gt_center">0.93, 2.4</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">COPD</td>
+<td class="gt_row gt_center">0.45</td>
+<td class="gt_row gt_center">0.21, 0.68</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">Arthritis or Gout</td>
+<td class="gt_row gt_center">0.40</td>
+<td class="gt_row gt_center">0.23, 0.57</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">Cancer</td>
+<td class="gt_row gt_center">0.12</td>
+<td class="gt_row gt_center">-0.06, 0.29</td>
+<td class="gt_row gt_center">0.2</td></tr>
+    <tr><td class="gt_row gt_left">PASE Score</td>
+<td class="gt_row gt_center">0.00</td>
+<td class="gt_row gt_center">0.00, 0.00</td>
+<td class="gt_row gt_center">0.056</td></tr>
+    <tr><td class="gt_row gt_left">Subjective Health Rating</td>
+<td class="gt_row gt_center">0.28</td>
+<td class="gt_row gt_center">0.05, 0.51</td>
+<td class="gt_row gt_center">0.015</td></tr>
+    <tr><td class="gt_row gt_left">Body Mass Index</td>
+<td class="gt_row gt_center">-0.05</td>
+<td class="gt_row gt_center">-0.09, 0.00</td>
+<td class="gt_row gt_center">0.035</td></tr>
+    <tr><td class="gt_row gt_left">Average Grip Strength</td>
+<td class="gt_row gt_center">-0.03</td>
+<td class="gt_row gt_center">-0.04, -0.02</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">Walking Speed</td>
+<td class="gt_row gt_center">-0.67</td>
+<td class="gt_row gt_center">-1.1, -0.25</td>
+<td class="gt_row gt_center">0.002</td></tr>
+    <tr><td class="gt_row gt_left">Corrected Femoral Neck BMD</td>
+<td class="gt_row gt_center">1.0</td>
+<td class="gt_row gt_center">0.34, 1.7</td>
+<td class="gt_row gt_center">0.003</td></tr>
+    <tr><td class="gt_row gt_left">Total Body Fat</td>
+<td class="gt_row gt_center">0.04</td>
+<td class="gt_row gt_center">0.02, 0.06</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">Birmingham Site (vs PO)</td>
+<td class="gt_row gt_center">0.04</td>
+<td class="gt_row gt_center">-0.24, 0.33</td>
+<td class="gt_row gt_center">0.8</td></tr>
+    <tr><td class="gt_row gt_left">Minneapolis Site (vs PO)</td>
+<td class="gt_row gt_center">0.13</td>
+<td class="gt_row gt_center">-0.15, 0.41</td>
+<td class="gt_row gt_center">0.4</td></tr>
+    <tr><td class="gt_row gt_left">Palo Alto Site (vs PO)</td>
+<td class="gt_row gt_center">0.16</td>
+<td class="gt_row gt_center">-0.13, 0.44</td>
+<td class="gt_row gt_center">0.3</td></tr>
+    <tr><td class="gt_row gt_left">Pittsburg Site (vs PO)</td>
+<td class="gt_row gt_center">-0.19</td>
+<td class="gt_row gt_center">-0.49, 0.10</td>
+<td class="gt_row gt_center">0.2</td></tr>
+    <tr><td class="gt_row gt_left">San Diego Site (vs PO)</td>
+<td class="gt_row gt_center">0.00</td>
+<td class="gt_row gt_center">-0.29, 0.29</td>
+<td class="gt_row gt_center">&gt;0.9</td></tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="4">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          OR = Odds Ratio, CI = Confidence Interval
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table>
+</div>
+</div>
 </div>
 <div id="creating-the-reduced-model" class="section level3">
 <h3>Creating the reduced model</h3>
@@ -3266,6 +3729,445 @@ kable(summary(reduced_model)$coef)</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>We’ve added back PACE score to achieve the most parsimonious model for which the full model does not provide significant advantage in performance by the likelihood ratio test.</p>
+</div>
+<div id="reduced-model-table-for-presentation" class="section level3">
+<h3>Reduced model table for presentation</h3>
+<pre class="r"><code>tbl_regression(reduced_model, 
+    label = list(
+                  giage1 ~ &quot;Age&quot;
+#                 ,mhdiab ~ &quot;Diabetes&quot;
+#                 ,mhstrk ~ &quot;Stroke&quot;
+                 ,mhpark ~ &quot;Parkinsons&quot;
+                 ,mhcopd ~ &quot;COPD&quot;
+                 ,mharth ~ &quot;Arthritis or Gout&quot;
+#                 ,mhcancer ~ &quot;Cancer&quot;
+                 ,pascore ~ &quot;PASE Score&quot;
+                 ,hwbmi ~ &quot;Body Mass Index&quot;
+                 ,b1tbfkg ~ &quot;Total Body Fat&quot;
+#                 ,b1tblkg ~ &quot;Lean Body Mass&quot;
+                 ,gsgrpavg ~ &quot;Average Grip Strength&quot;
+                 ,nfwlkspd ~ &quot;Walking Speed&quot;
+                 ,b1fnd ~ &quot;Corrected Femoral Neck BMD&quot;
+#                 ,b1thd ~ &quot;Corrected Total Hip BMD&quot;
+                 # ,st_1 ~ &quot;Birmingham Site (vs PO)&quot;
+                 # ,st_2 ~ &quot;Minneapolis Site (vs PO)&quot;
+                 # ,st_3 ~ &quot;Palo Alto Site (vs PO)&quot;
+                 # ,st_4 ~ &quot;Pittsburg Site (vs PO)&quot;
+                 # ,st_5 ~ &quot;San Diego Site (vs PO)&quot;
+                 ,qlh ~ &quot;Subjective Health Rating&quot;
+    ),
+               exponentiate = FALSE)</code></pre>
+<div id="eokwkskvom" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#eokwkskvom .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#eokwkskvom .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#eokwkskvom .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#eokwkskvom .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#eokwkskvom .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#eokwkskvom .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#eokwkskvom .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#eokwkskvom .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#eokwkskvom .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#eokwkskvom .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#eokwkskvom .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#eokwkskvom .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#eokwkskvom .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#eokwkskvom .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#eokwkskvom .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#eokwkskvom .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#eokwkskvom .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#eokwkskvom .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#eokwkskvom .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#eokwkskvom .gt_left {
+  text-align: left;
+}
+
+#eokwkskvom .gt_center {
+  text-align: center;
+}
+
+#eokwkskvom .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#eokwkskvom .gt_font_normal {
+  font-weight: normal;
+}
+
+#eokwkskvom .gt_font_bold {
+  font-weight: bold;
+}
+
+#eokwkskvom .gt_font_italic {
+  font-style: italic;
+}
+
+#eokwkskvom .gt_super {
+  font-size: 65%;
+}
+
+#eokwkskvom .gt_footnote_marks {
+  font-style: italic;
+  font-weight: normal;
+  font-size: 65%;
+}
+</style>
+<table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>log(OR)</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td class="gt_row gt_left">Age</td>
+<td class="gt_row gt_center">0.02</td>
+<td class="gt_row gt_center">0.01, 0.04</td>
+<td class="gt_row gt_center">0.003</td></tr>
+    <tr><td class="gt_row gt_left">Parkinsons</td>
+<td class="gt_row gt_center">1.6</td>
+<td class="gt_row gt_center">0.89, 2.4</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">COPD</td>
+<td class="gt_row gt_center">0.44</td>
+<td class="gt_row gt_center">0.20, 0.68</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">Arthritis or Gout</td>
+<td class="gt_row gt_center">0.39</td>
+<td class="gt_row gt_center">0.23, 0.56</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">PASE Score</td>
+<td class="gt_row gt_center">0.00</td>
+<td class="gt_row gt_center">0.00, 0.00</td>
+<td class="gt_row gt_center">0.087</td></tr>
+    <tr><td class="gt_row gt_left">Subjective Health Rating</td>
+<td class="gt_row gt_center">0.33</td>
+<td class="gt_row gt_center">0.10, 0.55</td>
+<td class="gt_row gt_center">0.004</td></tr>
+    <tr><td class="gt_row gt_left">Body Mass Index</td>
+<td class="gt_row gt_center">-0.05</td>
+<td class="gt_row gt_center">-0.09, -0.01</td>
+<td class="gt_row gt_center">0.018</td></tr>
+    <tr><td class="gt_row gt_left">Average Grip Strength</td>
+<td class="gt_row gt_center">-0.03</td>
+<td class="gt_row gt_center">-0.05, -0.02</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+    <tr><td class="gt_row gt_left">Walking Speed</td>
+<td class="gt_row gt_center">-0.65</td>
+<td class="gt_row gt_center">-1.1, -0.24</td>
+<td class="gt_row gt_center">0.002</td></tr>
+    <tr><td class="gt_row gt_left">Corrected Femoral Neck BMD</td>
+<td class="gt_row gt_center">1.1</td>
+<td class="gt_row gt_center">0.41, 1.7</td>
+<td class="gt_row gt_center">0.001</td></tr>
+    <tr><td class="gt_row gt_left">Total Body Fat</td>
+<td class="gt_row gt_center">0.04</td>
+<td class="gt_row gt_center">0.02, 0.06</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="4">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          OR = Odds Ratio, CI = Confidence Interval
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table>
+</div>
 </div>
 </div>
 <div id="step-3-check-removed-covariates-using-the-change-in-beta_i-method" class="section level2">
@@ -5872,14 +6774,25 @@ summary(step7_model1)$coef</code></pre>
 <div id="checking-the-fit" class="section level3">
 <h3>Checking the fit</h3>
 <p>For the above model, there are several continuous variables; therefore <span class="math inline">\(J\approx n\)</span>, and therefor the assumptions of the Pearson and Deviance Residuals tests (i.e. that the test statistic follows a <span class="math inline">\(\chi^2_{J-(p+1)}\)</span> distribution) do not hold. Therefore we will use the Hosmer-Lemeshow approach, as implemented in the ResourceSelection package:</p>
-<pre class="r"><code>hoslem.test(step7_narm$falls, fitted(step7_model1), g=g)</code></pre>
+<pre class="r"><code>n &lt;- length(step7_narm$falls)
+n1 &lt;- sum(step7_narm$falls)
+g &lt;- max(10,min(n1/2, (n-n1)/2, 2+8^(n/1000)^2))
+hoslem.test(step7_narm$falls, fitted(step7_model1), g=g)</code></pre>
 <pre><code>## 
 ##  Hosmer and Lemeshow goodness of fit (GOF) test
 ## 
 ## data:  step7_narm$falls, fitted(step7_model1)
-## X-squared = 409.76, df = 375.5, p-value = 0.1078</code></pre>
+## X-squared = 403.09, df = 374, p-value = 0.1442</code></pre>
 <p>The moderate p-value reported above is adequately large, but only slightly better than that of the preliminary final. model. To assess the discriminative ability of the preliminary final model we can compute the AUROC:</p>
-<pre class="r"><code>#gof(x = step7_model1, lpotROC = TRUE)$auc</code></pre>
+<pre class="r"><code>gof(x = step7_model1, lpotROC = TRUE, g=g+1)$auc</code></pre>
+<pre><code>## Setting levels: control = 0, case = 1</code></pre>
+<pre><code>## Setting direction: controls &lt; cases</code></pre>
+<p><img src="data:image/png;base64,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" width="672" /></p>
+<pre><code>##          auc lower 95% CI upper 95% CI 
+##     66.15480     63.98589     68.32371 
+## attr(,&quot;interpret&quot;)
+## [1] &quot;auc = 0.5       --&gt; useless&quot;   &quot;0.7 &lt; auc &lt; 0.8 --&gt; good&quot;     
+## [3] &quot;0.8 &lt; auc &lt; 0.9 --&gt; excellent&quot;</code></pre>
 <p>As reported above, AUROC of the preliminary final model is 66.3% (64.1%, 68.4%). The reported valyes being less than 70% is somewhat concerning, but the model may be adequate for some purposes.</p>
 <p>We can compute the pseudo-<span class="math inline">\(R^2\)</span> statistic (the McFadden <span class="math inline">\(R^2\)</span> statistic from the DescTools package):</p>
 <pre class="r"><code>PseudoR2(step7_model1)</code></pre>
@@ -5943,12 +6856,12 @@ outlier</code></pre>
                             ,b1fnd ~ &quot;Corrected Femoral Neck BMD&quot;
                             ),
                exponentiate = FALSE)</code></pre>
-<div id="ocycintjhh" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="tvrbklgbcn" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#ocycintjhh .gt_table {
+#tvrbklgbcn .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -5973,7 +6886,7 @@ outlier</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_heading {
+#tvrbklgbcn .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -5985,7 +6898,7 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_title {
+#tvrbklgbcn .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -5995,7 +6908,7 @@ outlier</code></pre>
   border-bottom-width: 0;
 }
 
-#ocycintjhh .gt_subtitle {
+#tvrbklgbcn .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -6005,13 +6918,13 @@ outlier</code></pre>
   border-top-width: 0;
 }
 
-#ocycintjhh .gt_bottom_border {
+#tvrbklgbcn .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_col_headings {
+#tvrbklgbcn .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -6026,7 +6939,7 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_col_heading {
+#tvrbklgbcn .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6046,7 +6959,7 @@ outlier</code></pre>
   overflow-x: hidden;
 }
 
-#ocycintjhh .gt_column_spanner_outer {
+#tvrbklgbcn .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6058,15 +6971,15 @@ outlier</code></pre>
   padding-right: 4px;
 }
 
-#ocycintjhh .gt_column_spanner_outer:first-child {
+#tvrbklgbcn .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ocycintjhh .gt_column_spanner_outer:last-child {
+#tvrbklgbcn .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ocycintjhh .gt_column_spanner {
+#tvrbklgbcn .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -6078,7 +6991,7 @@ outlier</code></pre>
   width: 100%;
 }
 
-#ocycintjhh .gt_group_heading {
+#tvrbklgbcn .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -6100,7 +7013,7 @@ outlier</code></pre>
   vertical-align: middle;
 }
 
-#ocycintjhh .gt_empty_group_heading {
+#tvrbklgbcn .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -6115,15 +7028,15 @@ outlier</code></pre>
   vertical-align: middle;
 }
 
-#ocycintjhh .gt_from_md > :first-child {
+#tvrbklgbcn .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ocycintjhh .gt_from_md > :last-child {
+#tvrbklgbcn .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ocycintjhh .gt_row {
+#tvrbklgbcn .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -6142,7 +7055,7 @@ outlier</code></pre>
   overflow-x: hidden;
 }
 
-#ocycintjhh .gt_stub {
+#tvrbklgbcn .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6154,7 +7067,7 @@ outlier</code></pre>
   padding-left: 12px;
 }
 
-#ocycintjhh .gt_summary_row {
+#tvrbklgbcn .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -6164,7 +7077,7 @@ outlier</code></pre>
   padding-right: 5px;
 }
 
-#ocycintjhh .gt_first_summary_row {
+#tvrbklgbcn .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -6174,7 +7087,7 @@ outlier</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_grand_summary_row {
+#tvrbklgbcn .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -6184,7 +7097,7 @@ outlier</code></pre>
   padding-right: 5px;
 }
 
-#ocycintjhh .gt_first_grand_summary_row {
+#tvrbklgbcn .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -6194,11 +7107,11 @@ outlier</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_striped {
+#tvrbklgbcn .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ocycintjhh .gt_table_body {
+#tvrbklgbcn .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -6207,7 +7120,7 @@ outlier</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_footnotes {
+#tvrbklgbcn .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -6221,13 +7134,13 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_footnote {
+#tvrbklgbcn .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#ocycintjhh .gt_sourcenotes {
+#tvrbklgbcn .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -6241,41 +7154,41 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ocycintjhh .gt_sourcenote {
+#tvrbklgbcn .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#ocycintjhh .gt_left {
+#tvrbklgbcn .gt_left {
   text-align: left;
 }
 
-#ocycintjhh .gt_center {
+#tvrbklgbcn .gt_center {
   text-align: center;
 }
 
-#ocycintjhh .gt_right {
+#tvrbklgbcn .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ocycintjhh .gt_font_normal {
+#tvrbklgbcn .gt_font_normal {
   font-weight: normal;
 }
 
-#ocycintjhh .gt_font_bold {
+#tvrbklgbcn .gt_font_bold {
   font-weight: bold;
 }
 
-#ocycintjhh .gt_font_italic {
+#tvrbklgbcn .gt_font_italic {
   font-style: italic;
 }
 
-#ocycintjhh .gt_super {
+#tvrbklgbcn .gt_super {
   font-size: 65%;
 }
 
-#ocycintjhh .gt_footnote_marks {
+#tvrbklgbcn .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
@@ -6383,12 +7296,12 @@ outlier</code></pre>
                             ,b1fnd ~ &quot;Corrected Femoral Neck BMD&quot;
                             ),
                exponentiate = TRUE)</code></pre>
-<div id="asmdvqxrvi" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="hdhfjgvcet" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#asmdvqxrvi .gt_table {
+#hdhfjgvcet .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -6413,7 +7326,7 @@ outlier</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_heading {
+#hdhfjgvcet .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -6425,7 +7338,7 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_title {
+#hdhfjgvcet .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -6435,7 +7348,7 @@ outlier</code></pre>
   border-bottom-width: 0;
 }
 
-#asmdvqxrvi .gt_subtitle {
+#hdhfjgvcet .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -6445,13 +7358,13 @@ outlier</code></pre>
   border-top-width: 0;
 }
 
-#asmdvqxrvi .gt_bottom_border {
+#hdhfjgvcet .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_col_headings {
+#hdhfjgvcet .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -6466,7 +7379,7 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_col_heading {
+#hdhfjgvcet .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6486,7 +7399,7 @@ outlier</code></pre>
   overflow-x: hidden;
 }
 
-#asmdvqxrvi .gt_column_spanner_outer {
+#hdhfjgvcet .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6498,15 +7411,15 @@ outlier</code></pre>
   padding-right: 4px;
 }
 
-#asmdvqxrvi .gt_column_spanner_outer:first-child {
+#hdhfjgvcet .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#asmdvqxrvi .gt_column_spanner_outer:last-child {
+#hdhfjgvcet .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#asmdvqxrvi .gt_column_spanner {
+#hdhfjgvcet .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -6518,7 +7431,7 @@ outlier</code></pre>
   width: 100%;
 }
 
-#asmdvqxrvi .gt_group_heading {
+#hdhfjgvcet .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -6540,7 +7453,7 @@ outlier</code></pre>
   vertical-align: middle;
 }
 
-#asmdvqxrvi .gt_empty_group_heading {
+#hdhfjgvcet .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -6555,15 +7468,15 @@ outlier</code></pre>
   vertical-align: middle;
 }
 
-#asmdvqxrvi .gt_from_md > :first-child {
+#hdhfjgvcet .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#asmdvqxrvi .gt_from_md > :last-child {
+#hdhfjgvcet .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#asmdvqxrvi .gt_row {
+#hdhfjgvcet .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -6582,7 +7495,7 @@ outlier</code></pre>
   overflow-x: hidden;
 }
 
-#asmdvqxrvi .gt_stub {
+#hdhfjgvcet .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6594,7 +7507,7 @@ outlier</code></pre>
   padding-left: 12px;
 }
 
-#asmdvqxrvi .gt_summary_row {
+#hdhfjgvcet .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -6604,7 +7517,7 @@ outlier</code></pre>
   padding-right: 5px;
 }
 
-#asmdvqxrvi .gt_first_summary_row {
+#hdhfjgvcet .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -6614,7 +7527,7 @@ outlier</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_grand_summary_row {
+#hdhfjgvcet .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -6624,7 +7537,7 @@ outlier</code></pre>
   padding-right: 5px;
 }
 
-#asmdvqxrvi .gt_first_grand_summary_row {
+#hdhfjgvcet .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -6634,11 +7547,11 @@ outlier</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_striped {
+#hdhfjgvcet .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#asmdvqxrvi .gt_table_body {
+#hdhfjgvcet .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -6647,7 +7560,7 @@ outlier</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_footnotes {
+#hdhfjgvcet .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -6661,13 +7574,13 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_footnote {
+#hdhfjgvcet .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#asmdvqxrvi .gt_sourcenotes {
+#hdhfjgvcet .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -6681,41 +7594,41 @@ outlier</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#asmdvqxrvi .gt_sourcenote {
+#hdhfjgvcet .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#asmdvqxrvi .gt_left {
+#hdhfjgvcet .gt_left {
   text-align: left;
 }
 
-#asmdvqxrvi .gt_center {
+#hdhfjgvcet .gt_center {
   text-align: center;
 }
 
-#asmdvqxrvi .gt_right {
+#hdhfjgvcet .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#asmdvqxrvi .gt_font_normal {
+#hdhfjgvcet .gt_font_normal {
   font-weight: normal;
 }
 
-#asmdvqxrvi .gt_font_bold {
+#hdhfjgvcet .gt_font_bold {
   font-weight: bold;
 }
 
-#asmdvqxrvi .gt_font_italic {
+#hdhfjgvcet .gt_font_italic {
   font-style: italic;
 }
 
-#asmdvqxrvi .gt_super {
+#hdhfjgvcet .gt_super {
   font-size: 65%;
 }
 
-#asmdvqxrvi .gt_footnote_marks {
+#hdhfjgvcet .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
@@ -6835,12 +7748,12 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
     ) %&gt;% add_p() %&gt;% add_overall() %&gt;%
   modify_caption(&quot;**Table 1. Patient Characteristics**&quot;) %&gt;%
   bold_labels()</code></pre>
-<div id="eoqieachim" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<div id="jkkzfuienn" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#eoqieachim .gt_table {
+#jkkzfuienn .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -6865,7 +7778,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-left-color: #D3D3D3;
 }
 
-#eoqieachim .gt_heading {
+#jkkzfuienn .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -6877,7 +7790,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-right-color: #D3D3D3;
 }
 
-#eoqieachim .gt_title {
+#jkkzfuienn .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -6887,7 +7800,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-bottom-width: 0;
 }
 
-#eoqieachim .gt_subtitle {
+#jkkzfuienn .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -6897,13 +7810,13 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-top-width: 0;
 }
 
-#eoqieachim .gt_bottom_border {
+#jkkzfuienn .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#eoqieachim .gt_col_headings {
+#jkkzfuienn .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -6918,7 +7831,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-right-color: #D3D3D3;
 }
 
-#eoqieachim .gt_col_heading {
+#jkkzfuienn .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6938,7 +7851,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   overflow-x: hidden;
 }
 
-#eoqieachim .gt_column_spanner_outer {
+#jkkzfuienn .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -6950,15 +7863,15 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   padding-right: 4px;
 }
 
-#eoqieachim .gt_column_spanner_outer:first-child {
+#jkkzfuienn .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#eoqieachim .gt_column_spanner_outer:last-child {
+#jkkzfuienn .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#eoqieachim .gt_column_spanner {
+#jkkzfuienn .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -6970,7 +7883,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   width: 100%;
 }
 
-#eoqieachim .gt_group_heading {
+#jkkzfuienn .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -6992,7 +7905,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   vertical-align: middle;
 }
 
-#eoqieachim .gt_empty_group_heading {
+#jkkzfuienn .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -7007,15 +7920,15 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   vertical-align: middle;
 }
 
-#eoqieachim .gt_from_md > :first-child {
+#jkkzfuienn .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#eoqieachim .gt_from_md > :last-child {
+#jkkzfuienn .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#eoqieachim .gt_row {
+#jkkzfuienn .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -7034,7 +7947,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   overflow-x: hidden;
 }
 
-#eoqieachim .gt_stub {
+#jkkzfuienn .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -7046,7 +7959,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   padding-left: 12px;
 }
 
-#eoqieachim .gt_summary_row {
+#jkkzfuienn .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -7056,7 +7969,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   padding-right: 5px;
 }
 
-#eoqieachim .gt_first_summary_row {
+#jkkzfuienn .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -7066,7 +7979,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-top-color: #D3D3D3;
 }
 
-#eoqieachim .gt_grand_summary_row {
+#jkkzfuienn .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -7076,7 +7989,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   padding-right: 5px;
 }
 
-#eoqieachim .gt_first_grand_summary_row {
+#jkkzfuienn .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -7086,11 +7999,11 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-top-color: #D3D3D3;
 }
 
-#eoqieachim .gt_striped {
+#jkkzfuienn .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#eoqieachim .gt_table_body {
+#jkkzfuienn .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -7099,7 +8012,7 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-bottom-color: #D3D3D3;
 }
 
-#eoqieachim .gt_footnotes {
+#jkkzfuienn .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -7113,13 +8026,13 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-right-color: #D3D3D3;
 }
 
-#eoqieachim .gt_footnote {
+#jkkzfuienn .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#eoqieachim .gt_sourcenotes {
+#jkkzfuienn .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -7133,41 +8046,41 @@ MrOs_check$censored2 &lt;- ifelse(MrOs_check$censored == FALSE, &quot;Excluded&q
   border-right-color: #D3D3D3;
 }
 
-#eoqieachim .gt_sourcenote {
+#jkkzfuienn .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#eoqieachim .gt_left {
+#jkkzfuienn .gt_left {
   text-align: left;
 }
 
-#eoqieachim .gt_center {
+#jkkzfuienn .gt_center {
   text-align: center;
 }
 
-#eoqieachim .gt_right {
+#jkkzfuienn .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#eoqieachim .gt_font_normal {
+#jkkzfuienn .gt_font_normal {
   font-weight: normal;
 }
 
-#eoqieachim .gt_font_bold {
+#jkkzfuienn .gt_font_bold {
   font-weight: bold;
 }
 
-#eoqieachim .gt_font_italic {
+#jkkzfuienn .gt_font_italic {
   font-style: italic;
 }
 
-#eoqieachim .gt_super {
+#jkkzfuienn .gt_super {
   font-size: 65%;
 }
 
-#eoqieachim .gt_footnote_marks {
+#jkkzfuienn .gt_footnote_marks {
   font-style: italic;
   font-weight: normal;
   font-size: 65%;
