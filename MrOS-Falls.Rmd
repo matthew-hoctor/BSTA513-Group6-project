@@ -1761,7 +1761,9 @@ MrOs_check %>%  # why did this break?
                  ,b1tbfkg ~ "Total Body Fat"
                  ,b1tblkg ~ "Lean Body Mass"
     ),
-    ) %>% add_p() %>% add_overall()
+    ) %>% add_p() %>% add_overall() %>%
+  modify_caption("**Table 1. Patient Characteristics**") %>%
+  bold_labels()
 
 ```
 
