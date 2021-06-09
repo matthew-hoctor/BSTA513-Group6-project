@@ -1730,6 +1730,40 @@ tbl_regression(final_model,
 
 ## Table 1 patient characteristics
 
+```{r}
+MrOs_check <- MrOs %>%  # why did this break?
+    dplyr::select(falls, giage1, mhstrk, mhpark, mhcopd, mharth, pascore, qlh, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1tbfkg, b1tblkg)
+MrOs_check$censored <- complete.cases(MrOs_check)
+MrOs_check$censored2 <- ifelse(MrOs_check$censored == FALSE, "Excluded", "Included")
+#MrOs$censored <- ifelse(MrOs$mhfalln2 == NA,1,0)
+#sum(MrOs$censored)
+#tbl_summary(step7_narm)
+```
+
+```{r}
+MrOs_check %>%  # why did this break?
+    dplyr::select(falls, giage1, mhstrk, mhpark, mhcopd, mharth, pascore, qlh, hwbmi, gsgrpavg, nfwlkspd, b1fnd, b1tbfkg, b1tblkg, censored2)%>% 
+    tbl_summary(by = censored2, missing = "no",
+    label = list(falls ~ "More than one fall"
+                 ,giage1 ~ "Age"
+                 ,mhstrk ~ "Stroke"
+                 ,mhpark ~ "Parkinsons"
+                 ,mhcopd ~ "COPD"
+                 ,mharth ~ "Arthritis or Gout"
+                 ,pascore ~ "PASE Score"
+                 ,qlh ~ "Subjective Health Rating"
+                 ,hwbmi ~ "Body Mass Index"
+                 ,gsgrpavg ~ "Average Grip Strength"
+                 ,nfwlkspd ~ "Walking Speed"
+                 ,b1fnd ~ "Corrected Femoral Neck BMD"
+                 ,b1tbfkg ~ "Total Body Fat"
+                 ,b1tblkg ~ "Lean Body Mass"
+    ),
+    ) %>% add_p() %>% add_overall()
+
+```
+
+
 Calculate p-values for differences between outcomes in each exposure group
 
 # References
